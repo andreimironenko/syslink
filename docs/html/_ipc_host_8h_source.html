@@ -109,25 +109,39 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <a name="l00058"></a>00058 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {
 <a name="l00059"></a>00059 <span class="preprocessor">#endif</span>
 <a name="l00060"></a>00060 <span class="preprocessor"></span>
-<a name="l00108"></a><a class="code" href="_ipc_host_8h.html#a3b5a2f1d389a104ea0b02aad9c5978fc">00108</a> <span class="preprocessor">#define Ipc_CONTROLCMD_LOADCALLBACK  (0xBABE0000)</span>
-<a name="l00109"></a>00109 <span class="preprocessor"></span>
-<a name="l00110"></a>00110 
-<a name="l00127"></a><a class="code" href="_ipc_host_8h.html#a1624f824278e993226134c8b8ef61992">00127</a> <span class="preprocessor">#define Ipc_CONTROLCMD_STARTCALLBACK (0xBABE0001)</span>
-<a name="l00128"></a>00128 <span class="preprocessor"></span>
-<a name="l00129"></a>00129 
-<a name="l00153"></a><a class="code" href="_ipc_host_8h.html#af2a882f81ddbd6493defb19f14d302f7">00153</a> <span class="preprocessor">#define Ipc_CONTROLCMD_STOPCALLBACK  (0xBABE0002)</span>
-<a name="l00154"></a>00154 <span class="preprocessor"></span>
-<a name="l00155"></a>00155 
-<a name="l00170"></a>00170 <a class="code" href="_std_8h.html#a7cc214a236ad3bb6ad435bdcf5262a3f">Int</a> <a class="code" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control</a> (<a class="code" href="_std_8h.html#accc14a7c843716dfed734f3a03e8d2b6">UInt16</a> procId, <a class="code" href="_std_8h.html#adf1ef98b7070177c7c709b0b82276a07">Int32</a> cmdId, <a class="code" href="_std_8h.html#a6ce3b7d762fb68676a01d4a36ebf42c1">Ptr</a> arg);
-<a name="l00171"></a>00171 
-<a name="l00191"></a>00191 <a class="code" href="_std_8h.html#a7cc214a236ad3bb6ad435bdcf5262a3f">Int</a> <a class="code" href="_ipc_host_8h.html#a80045d7de31e30daa6b0fe5a697e6cd8" title="Return a runtime id for the given application key.">Ipc_runtimeId</a>(<a class="code" href="_std_8h.html#a9b66271558bfa5abc5095791246b540d">UInt8</a> *rtid);
-<a name="l00192"></a>00192 
-<a name="l00193"></a>00193 <span class="preprocessor">#if defined (__cplusplus)</span>
-<a name="l00194"></a>00194 <span class="preprocessor"></span>}
-<a name="l00195"></a>00195 <span class="preprocessor">#endif </span><span class="comment">/* defined (__cplusplus) */</span>
-<a name="l00196"></a>00196 
-<a name="l00197"></a>00197 
-<a name="l00198"></a>00198 <span class="preprocessor">#endif </span><span class="comment">/* _IPCHOST_H__ */</span>
+<a name="l00094"></a><a class="code" href="_ipc_host_8h.html#a3d15c102515c2cac19246ebf525f5e7d">00094</a> <span class="preprocessor">#define Ipc_TERMINATEPOLICY_STOP 1</span>
+<a name="l00095"></a>00095 <span class="preprocessor"></span>
+<a name="l00096"></a>00096 
+<a name="l00105"></a><a class="code" href="_ipc_host_8h.html#a1229919513266da85e13429a3952ccd4">00105</a> <span class="preprocessor">#define Ipc_TERMINATEPOLICY_NOTIFY 2</span>
+<a name="l00106"></a>00106 <span class="preprocessor"></span>
+<a name="l00107"></a>00107 
+<a name="l00133"></a><a class="code" href="struct_ipc___terminate.html">00133</a> <span class="keyword">typedef</span> <span class="keyword">struct </span>{
+<a name="l00134"></a><a class="code" href="struct_ipc___terminate.html#a2ba364a6684f190fc05560ed5062553c">00134</a>     <a class="code" href="_std_8h.html#a7cc214a236ad3bb6ad435bdcf5262a3f">Int</a> <a class="code" href="struct_ipc___terminate.html#a2ba364a6684f190fc05560ed5062553c">policy</a>;                 
+<a name="l00135"></a>00135 } <a class="code" href="struct_ipc___terminate.html" title="Argument for the Ipc_CONTROLCMD_SETTERMINATEPOLICY command.">Ipc_Terminate</a>;
+<a name="l00136"></a>00136 
+<a name="l00137"></a>00137 
+<a name="l00160"></a><a class="code" href="_ipc_host_8h.html#a3b5a2f1d389a104ea0b02aad9c5978fc">00160</a> <span class="preprocessor">#define Ipc_CONTROLCMD_LOADCALLBACK  (0xBABE0000)</span>
+<a name="l00161"></a>00161 <span class="preprocessor"></span>
+<a name="l00162"></a>00162 
+<a name="l00179"></a><a class="code" href="_ipc_host_8h.html#a1624f824278e993226134c8b8ef61992">00179</a> <span class="preprocessor">#define Ipc_CONTROLCMD_STARTCALLBACK (0xBABE0001)</span>
+<a name="l00180"></a>00180 <span class="preprocessor"></span>
+<a name="l00181"></a>00181 
+<a name="l00205"></a><a class="code" href="_ipc_host_8h.html#af2a882f81ddbd6493defb19f14d302f7">00205</a> <span class="preprocessor">#define Ipc_CONTROLCMD_STOPCALLBACK  (0xBABE0002)</span>
+<a name="l00206"></a>00206 <span class="preprocessor"></span>
+<a name="l00207"></a>00207 
+<a name="l00222"></a><a class="code" href="_ipc_host_8h.html#a10bc56753834cf04eba473fe775433eb">00222</a> <span class="preprocessor">#define Ipc_CONTROLCMD_SETTERMINATEPOLICY  (0xBABE0003)</span>
+<a name="l00223"></a>00223 <span class="preprocessor"></span>
+<a name="l00224"></a>00224 
+<a name="l00239"></a>00239 <a class="code" href="_std_8h.html#a7cc214a236ad3bb6ad435bdcf5262a3f">Int</a> <a class="code" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control</a> (<a class="code" href="_std_8h.html#accc14a7c843716dfed734f3a03e8d2b6">UInt16</a> procId, <a class="code" href="_std_8h.html#adf1ef98b7070177c7c709b0b82276a07">Int32</a> cmdId, <a class="code" href="_std_8h.html#a6ce3b7d762fb68676a01d4a36ebf42c1">Ptr</a> arg);
+<a name="l00240"></a>00240 
+<a name="l00260"></a>00260 <a class="code" href="_std_8h.html#a7cc214a236ad3bb6ad435bdcf5262a3f">Int</a> <a class="code" href="_ipc_host_8h.html#a80045d7de31e30daa6b0fe5a697e6cd8" title="Return a runtime id for the given application key.">Ipc_runtimeId</a>(<a class="code" href="_std_8h.html#a9b66271558bfa5abc5095791246b540d">UInt8</a> *rtid);
+<a name="l00261"></a>00261 
+<a name="l00262"></a>00262 <span class="preprocessor">#if defined (__cplusplus)</span>
+<a name="l00263"></a>00263 <span class="preprocessor"></span>}
+<a name="l00264"></a>00264 <span class="preprocessor">#endif </span><span class="comment">/* defined (__cplusplus) */</span>
+<a name="l00265"></a>00265 
+<a name="l00266"></a>00266 
+<a name="l00267"></a>00267 <span class="preprocessor">#endif </span><span class="comment">/* _IPCHOST_H__ */</span>
 </pre></div></div>
 </div>
 <!--- window showing the filter options -->

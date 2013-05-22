@@ -491,10 +491,15 @@ Int32 FrameQBufMgr_ShMem_getConfig(FrameQBufMgr_ShMem_Config *cfg)
     if (NULL != cfg) {
         /* (If setup has not yet been called) */
         if (FrameQBufMgr_ShMem_module->refCount == 0) {
+
             /* Return the default static config values */
-            cfg->eventNo        = FrameQBufMgr_ShMem_NOTIFY_RESERVED_EVENTNO;
-//            cfg->useNameServer  = TRUE;
-            cfg->maxInstances   = FrameQBufMgr_MAXINSTANCES;
+            memcpy(cfg, &FrameQBufMgr_ShMem_module->defaultCfg,
+                    sizeof(FrameQBufMgr_ShMem_Config));
+            /*
+             * cfg->eventNo        = FrameQBufMgr_ShMem_NOTIFY_RESERVED_EVENTNO;
+             * cfg->usedefaultgate = FALSE;
+             * cfg->maxInstances   = FrameQBufMgr_MAXINSTANCES;
+             */
         }
         else {
             /* Return the currently configured parameters */

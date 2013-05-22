@@ -51,6 +51,7 @@
 
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
+#include <ti/syslink/utils/Dev.h>
 #include <ti/syslink/inc/usr/NotifyDrvUsr.h>
 #include <ti/syslink/inc/NotifyDrvDefs.h>
 
@@ -139,7 +140,7 @@ Int NotifyDrvUsr_open(Bool createThread)
         NotifyDrvUsr_setup = getpid();
 
         /* open the notify driver */
-        NotifyDrvUsr_handle = open(NOTIFY_DRIVER_NAME, O_SYNC | O_RDWR);
+        NotifyDrvUsr_handle = Dev_pollOpen(NOTIFY_DRIVER_NAME, O_SYNC | O_RDWR);
 
         if (NotifyDrvUsr_handle < 0) {
             status = Notify_E_OSFAILURE;

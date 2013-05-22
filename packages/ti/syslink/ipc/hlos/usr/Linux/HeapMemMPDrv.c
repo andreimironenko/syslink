@@ -52,6 +52,7 @@
 
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/syslink/utils/IHeap.h>
@@ -111,7 +112,7 @@ HeapMemMPDrv_open (Void)
 
     if (HeapMemMPDrv_refCount == 0) {
 
-        HeapMemMPDrv_handle = open (HEAPMEM_DRIVER_NAME,
+        HeapMemMPDrv_handle = Dev_pollOpen (HEAPMEM_DRIVER_NAME,
                                   O_SYNC | O_RDWR);
         if (HeapMemMPDrv_handle < 0) {
             perror (HEAPMEM_DRIVER_NAME);

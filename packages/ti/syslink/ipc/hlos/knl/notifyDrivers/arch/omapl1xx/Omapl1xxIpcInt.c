@@ -56,10 +56,12 @@
 #include <ti/syslink/inc/Bitops.h>
 
 /*  OS Headers */
+#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/pci.h>
+#include <linux/irq.h>
 
 /* OSAL and utils headers */
 #include <ti/syslink/inc/knl/OsalIsr.h>
@@ -610,6 +612,11 @@ Omapl1xxIpcInt_clearInterrupt (UInt16 procId, UInt32 intId)
     UInt32 retVal = 0x0;
     UInt32 index;
     UInt32 addr;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,37)
+    struct irq_data *irq_data;
+#else
+    struct irq_desc *irq_desc;
+#endif
 
     GT_2trace (curTrace,GT_ENTER,"Omapl1xxIpcInt_clearInterrupt",
                procId, intId);
@@ -624,6 +631,23 @@ Omapl1xxIpcInt_clearInterrupt (UInt16 procId, UInt32 intId)
 
     /* Clear the received interrupt. */
     SET_BIT (*((UInt32 *) addr), (index + BITPOS_DSP2ARMINTCLR));
+
+    /*
+     * ACK intr to AINTC.
+     *
+     * It has already been ack'ed by the kernel before calling
+     * this function, but since the ARM<->DSP interrupts in the
+     * CHIPSIG register are "level" instead of "pulse" variety,
+     * we need to ack it after taking down the level else we'll
+     * be called again immediately after returning.
+     */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,37)
+    irq_data = irq_get_irq_data(BASE_DSP2ARM_INTID);
+    irq_data->chip->irq_ack(irq_data);
+#else
+    irq_desc = irq_to_desc(BASE_DSP2ARM_INTID);
+    irq_desc->chip->ack(BASE_DSP2ARM_INTID);
+#endif
 
     GT_0trace (curTrace, GT_LEAVE, "Omapl1xxIpcInt_clearInterrupt");
 

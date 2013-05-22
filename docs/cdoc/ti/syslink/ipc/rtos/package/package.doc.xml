@@ -30,7 +30,7 @@
                     <line tab='0' content='%3Cgo%3ESyslink.%3Cspan+class%3D%22xdoc-id%22%3EterminateEventId%3C%2Fspan%3E%3C%2Fgo%3E+%3D+%3Ci%3E%3Cspan+class%3D%22xdoc-kw2%22%3EUInt32%3C%2Fspan%3E%3C%2Fi%3E+30%3B'/>
                 </synopMeta>
                 <docSect name='details'>
-                    <docPara content='When+a+SysLink+application+is+termiated%2C+the+SysLink+driver+will%0A++send+a+notify+terminate+event+to+all+attached+slaves+to+inform+them%0A++that+the+application+has+terminated.+The+event+id+used+for+this%0A++terminate+event+is+specified+by+this+config+param.'/>
+                    <docPara content='When+a+SysLink+application+is+terminated%2C+the+SysLink+driver+will%0A++send+a+notify+terminate+event+to+all+attached+slaves+to+inform+them%0A++that+the+application+has+terminated.+The+event+id+used+for+this%0A++terminate+event+is+specified+by+this+config+param.'/>
                     <docPara content='The+payload+of+the+terminate+event+is+the+runtime+id+of+the%0A++terminated+application.'/>
                 </docSect>
             </decl>
@@ -42,7 +42,7 @@
                     <line tab='0' content='%3Cgo%3ESyslink.%3Cspan+class%3D%22xdoc-id%22%3EterminateEventLineId%3C%2Fspan%3E%3C%2Fgo%3E+%3D+%3Ci%3E%3Cspan+class%3D%22xdoc-kw2%22%3EUInt16%3C%2Fspan%3E%3C%2Fi%3E+0%3B'/>
                 </synopMeta>
                 <docSect name='details'>
-                    <docPara content='The+SysLink+driver+uses+Notify_sendEvent+to+send+the+terminate%0A++event.+This+config+param+specifies+which+lineId+to+use+when+sending%0A++this+event.'/>
+                    <docPara content='The+SysLink+driver+uses+Notify_sendEvent%28%29+to+send+the+terminate%0A++event.+This+config+param+specifies+which+lineId+to+use+when+sending%0A++this+event.'/>
                 </docSect>
             </decl>
         </group>

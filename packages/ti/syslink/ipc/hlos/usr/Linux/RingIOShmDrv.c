@@ -59,6 +59,7 @@
 #include <ti/syslink/utils/List.h>
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/utils/Memory.h>
+#include <ti/syslink/utils/Dev.h>
 
 
 /* Utilities & OSAL headers */
@@ -121,7 +122,7 @@ RingIOShmDrv_open (Void)
         /* TBD: Protection for refCount. */
         RingIOShmDrv_refCount++;
 
-        RingIOShmDrv_handle = open (RINGIOSHM_DRIVER_NAME,
+        RingIOShmDrv_handle = Dev_pollOpen (RINGIOSHM_DRIVER_NAME,
                                   O_SYNC | O_RDWR);
         if (RingIOShmDrv_handle < 0) {
             perror (RINGIOSHM_DRIVER_NAME);

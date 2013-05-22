@@ -123,10 +123,12 @@ typedef struct Ipc_ModuleObject_tag {
     /*!< frameQBufMgr Initialize flag */
     Bool          frameQInitFlag;
     /*!< frameQ Initialize flag */
+    Int           terminatePolicy[MultiProc_MAXPROCESSORS];
+    /*!< terminate policy for each remote processor */
 } Ipc_ModuleObject;
 
-static Int Ipc_addTerminateEvent(Void);
-static Int Ipc_removeTerminateEvent(Void);
+static Int Ipc_addTerminateEvent(UInt16 procId);
+static Int Ipc_removeTerminateEvent(UInt16 procId);
 
 /* =============================================================================
  *  Globals
@@ -274,6 +276,7 @@ Ipc_setup (const Ipc_Config * cfg)
     Int            status = Ipc_S_SUCCESS;
     Ipc_Config *   config = NULL;
     Ipc_Config     tConfig;
+    Int            i;
 
     GT_1trace (curTrace, GT_ENTER, "Ipc_setup", cfg);
 
@@ -666,14 +669,10 @@ Ipc_setup (const Ipc_Config * cfg)
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
         }
 #endif
-    }
-
-    /* register a terminate event for the process */
-    status = Ipc_addTerminateEvent();
-
-    if (status < 0) {
-        GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_setup",
-                status, "Ipc_addTerminateEvent failed!");
+        /* initialize the default terminate policy */
+        for (i = 0; i < MultiProc_MAXPROCESSORS; i++) {
+            Ipc_state.terminatePolicy[i] = Ipc_TERMINATEPOLICY_STOP;
+        }
     }
 
     GT_1trace (curTrace, GT_LEAVE, "Ipc_setup", status);
@@ -687,7 +686,8 @@ Ipc_setup (const Ipc_Config * cfg)
 Int
 Ipc_destroy (void)
 {
-    Int             status = Ipc_S_SUCCESS;
+    Int status = Ipc_S_SUCCESS;
+    Int i;
 
     GT_0trace (curTrace, GT_ENTER, "Ipc_destroy");
 
@@ -705,12 +705,14 @@ Ipc_destroy (void)
                    Ipc_state.setupRefCount);
     }
     else {
-        /* unregister the terminate event */
-        status = Ipc_removeTerminateEvent();
-        
-        if (status < 0) {
-            GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_destroy",
-                    status, "Ipc_removeTerminateEvent failed");
+        /* unregister the terminate events */
+        for (i = 0; i < MultiProc_getNumProcessors(); i++) {
+            status = Ipc_removeTerminateEvent(i);
+            
+            if (status < 0) {
+                GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_destroy",
+                        status, "Ipc_removeTerminateEvent failed");
+            }
         }
 
         /* Finalize Frame module */
@@ -1073,73 +1075,98 @@ Ipc_destroy (void)
     return status;
 }
 
-
-/* Function to destroy a Ipc instance for a slave */
-Int
-Ipc_control (UInt16 procId, Int cmdId, Ptr arg)
+/*
+ *  ======== Ipc_control ========
+ */
+Int Ipc_control(UInt16 procId, Int cmdId, Ptr arg)
 {
-    Int             status    = Ipc_S_SUCCESS;
-    IpcDrv_CmdArgs cmdArgs;
+    Int                 status = Ipc_S_SUCCESS;
+    IpcDrv_CmdArgs      cmdArgs;
+    Ipc_Terminate *     termCfg;
 
-    GT_3trace (curTrace, GT_ENTER, "Ipc_control", procId, cmdId, arg);
+    GT_3trace(curTrace, GT_ENTER, "Ipc_control", procId, cmdId, arg);
+
+    /* save terminate policy for later use */
+    if (cmdId == Ipc_CONTROLCMD_SETTERMINATEPOLICY) {
+
+#if 0   /* TBD: need to implement Ipc_isAttached in user mode */
+        if (Ipc_isAttached(procId)) {
+            status = Ipc_E_INVALIDSTATE;
+            GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_control",
+                    status, "cannot set terminate policy while attached");
+            goto done;
+        }
+#endif
+
+        termCfg = (Ipc_Terminate *)arg;
+        Ipc_state.terminatePolicy[procId] = termCfg->policy;
+        goto done;
+    }
+
+    /* if stop callback, first remove the terminate event */
+    if (cmdId == Ipc_CONTROLCMD_STOPCALLBACK) {
+        status = Ipc_removeTerminateEvent(procId);
+
+        if (status < 0) {
+            GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_control",
+                    status, "Ipc_removeTerminateEvent failed");
+        }
+    }
 
     cmdArgs.args.control.procId = procId;
     cmdArgs.args.control.cmdId  = cmdId;
+
     if (arg != NULL) {
-        cmdArgs.args.control.arg   = (Ptr)(*(UInt32 *)arg);
+        cmdArgs.args.control.arg = (Ptr)(*(UInt32 *)arg);
     }
     else {
-        cmdArgs.args.control.arg   = NULL;
+        cmdArgs.args.control.arg = NULL;
     }
-    status = IpcDrv_ioctl (CMD_IPC_CONTROL, &cmdArgs);
-#if !defined(SYSLINK_BUILD_OPTIMIZE)
+
+    status = IpcDrv_ioctl(CMD_IPC_CONTROL, &cmdArgs);
+
     if (status < 0) {
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "Ipc_control",
-                             status,
-                             "API (through IOCTL) failed on kernel-side!");
+        GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_control", status,
+                "API (through IOCTL) failed on kernel-side!");
     }
     else {
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+        switch (cmdId) {
+            case Ipc_CONTROLCMD_STARTCALLBACK:
+                status = _SharedRegion_setRegions();
 
-        switch (cmdId)
-        {
-        case Ipc_CONTROLCMD_STARTCALLBACK:
-            status = _SharedRegion_setRegions ();
-            if (status < 0) {
-                status = Ipc_E_FAIL;
-                GT_setFailureReason (curTrace,
-                                     GT_4CLASS,
-                                     "Ipc_control",
-                                     status,
-                                     "_SharedRegion_setRegions API Failed!");
-            }
-            break;
+                if (status < 0) {
+                    status = Ipc_E_FAIL;
+                    GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_control",
+                            status, "_SharedRegion_setRegions API Failed!");
+                }
 
-        case Ipc_CONTROLCMD_STOPCALLBACK:
-            status = _SharedRegion_clearRegions ();
-            if (status < 0) {
-                status = Ipc_E_FAIL;
-                GT_setFailureReason (curTrace,
-                                     GT_4CLASS,
-                                     "Ipc_control",
-                                     status,
-                                     "_SharedRegion_clearRegions API Failed!");
-            }
-            break;
-        default:
-            break;
+                /* register the terminate event with the driver */
+                status = Ipc_addTerminateEvent(procId);
 
+                if (status < 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_control",
+                            status, "Ipc_addTerminateEvent failed");
+                }
+                break;
+
+            case Ipc_CONTROLCMD_STOPCALLBACK:
+                status = _SharedRegion_clearRegions();
+                if (status < 0) {
+                    status = Ipc_E_FAIL;
+                    GT_setFailureReason(curTrace, GT_4CLASS, "Ipc_control",
+                            status, "_SharedRegion_clearRegions API Failed!");
+                }
+                break;
+
+            default:
+                break;
         }
-#if !defined(SYSLINK_BUILD_OPTIMIZE)
     }
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
 
-    GT_1trace (curTrace, GT_LEAVE, "Ipc_control", status);
+done:
+    GT_1trace(curTrace, GT_LEAVE, "Ipc_control", status);
 
-    /*! @retval Ipc_S_SUCCESS Operation was successful */
-    return status;
+    return(status);
 }
 
 
@@ -1209,7 +1236,7 @@ Ipc_writeConfig (UInt16 remoteProcId, UInt32 tag, Ptr cfg, SizeT size)
 /*
  *  ======== Ipc_addTerminateEvent ========
  */
-static Int Ipc_addTerminateEvent(Void)
+static Int Ipc_addTerminateEvent(UInt16 procId)
 {
     Int status = Ipc_S_SUCCESS;
     UInt8 rtid;
@@ -1225,8 +1252,11 @@ static Int Ipc_addTerminateEvent(Void)
 
     /* register a terminate event */
     if (status == Ipc_S_SUCCESS) {
-        cmdArgs.args.addTerminateEvent.pid = OsalProcess_getPid();
-        cmdArgs.args.addTerminateEvent.payload = rtid;
+        cmdArgs.args.addTermEvent.pid = OsalProcess_getPid();
+        cmdArgs.args.addTermEvent.payload = rtid;
+        cmdArgs.args.addTermEvent.procId = procId;
+        cmdArgs.args.addTermEvent.policy =
+                Ipc_state.terminatePolicy[procId];
 
         status = IpcDrv_ioctl(CMD_IPC_ADDTERMINATEEVENT, &cmdArgs);
 
@@ -1242,14 +1272,15 @@ static Int Ipc_addTerminateEvent(Void)
 /*
  *  ======== Ipc_removeTerminateEvent ========
  */
-static Int Ipc_removeTerminateEvent(Void)
+static Int Ipc_removeTerminateEvent(UInt16 procId)
 {
     Int status;
     IpcDrv_CmdArgs cmdArgs;
 
     status = Ipc_S_SUCCESS;
 
-    cmdArgs.args.removeTerminateEvent.pid = OsalProcess_getPid();
+    cmdArgs.args.removeTermEvent.pid = OsalProcess_getPid();
+    cmdArgs.args.removeTermEvent.procId = procId;
 
     status = IpcDrv_ioctl(CMD_IPC_REMOVETERMINATEEVENT, &cmdArgs);
 

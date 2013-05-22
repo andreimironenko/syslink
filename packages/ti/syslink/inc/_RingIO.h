@@ -70,50 +70,36 @@ extern "C" {
  */
 
 /*!
- *  @def    RingIO_GLOBAL
- *
  *  @brief  Name of memory that contains the RingIO global structure
  */
 #define RingIO_GLOBAL "RingIO.global"
 
 /*!
- *  @def    RingIO_CONFIG
- *
  *  @brief  Name of memory that contains the RingIO configuration structure
  */
 #define RingIO_CONFIG "RingIO.cfg"
 
 /*!
- *  @def    RINGIO_INVALID_ATTR
- *
  *  @brief  This constant denotes an invalid attribute type.
  *          This should not be used for any valid attribute.
  */
 #define RingIO_INVALID_ATTR           (UInt16) 0xFFFF
 
 /*!
- *  @def    RingIO_INVALID_OFFSET
- *
  *  @brief  This constant an invalid offset in the attribute buffer.
  */
 #define RingIO_INVALID_OFFSET                 -1l
 
 /*!
- *  @def     RingIO_NotifyParam
- *
  *  @brief   This type is used for the Notification Parameter.
  */
 typedef Ptr RingIO_NotifyParam;
 
 /*!
- *  @macro  RingIO_NOTIFYENTRIES
- *
  *  @brief   Size of RingIO attributes
  */
 #define   RingIO_NOTIFYENTRIES   2
 /*!
- *  @macro  RingIO_SUBNOTIFYENTRIES
- *
  *  @brief  For reader and writer
  */
 #define   RingIO_SUBNOTIFYENTRIES   1
@@ -169,8 +155,6 @@ typedef struct RingIO_CfgFxns_tag {
 
 
 /*!
- *  @var    RingIO_nameServerEntry
- *
  *  @brief  RingIO information data structure to be added to Name Server
  */
 typedef struct RingIO_NameServerEntry_tag {

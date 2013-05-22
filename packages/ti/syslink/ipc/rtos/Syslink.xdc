@@ -61,7 +61,7 @@ metaonly module Syslink {
     /*!
      *  Notify event id to be used for the terminate event.
      *
-     *  When a SysLink application is termiated, the SysLink driver will
+     *  When a SysLink application is terminated, the SysLink driver will
      *  send a notify terminate event to all attached slaves to inform them
      *  that the application has terminated. The event id used for this
      *  terminate event is specified by this config param.
@@ -75,7 +75,7 @@ metaonly module Syslink {
     /*!
      *  Notify line id to be used for the terminate event.
      *
-     *  The SysLink driver uses Notify_sendEvent to send the terminate
+     *  The SysLink driver uses Notify_sendEvent() to send the terminate
      *  event. This config param specifies which lineId to use when sending
      *  this event.
      */

@@ -44,6 +44,7 @@
   <LI><OBJECT type="text/sitemap"><param name="Name" value="HeapQueueMgr_Params"><param name="Local" value="struct_heap_queue_mgr___params.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="IGateProvider_Object"><param name="Local" value="struct_i_gate_provider___object.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="IHeap_Object_tag"><param name="Local" value="struct_i_heap___object__tag.html"><param name="ImageNumber" value="11"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Ipc_Terminate"><param name="Local" value="struct_ipc___terminate.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="IpcMemMgr_Config_t"><param name="Local" value="struct_ipc_mem_mgr___config__t.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="List_Elem_tag"><param name="Local" value="struct_list___elem__tag.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="List_Object_tag"><param name="Local" value="struct_list___object__tag.html"><param name="ImageNumber" value="11"></OBJECT>
@@ -82,6 +83,7 @@
   <LI><OBJECT type="text/sitemap"><param name="Name" value="_MemoryOS.h"><param name="Local" value="___memory_o_s_8h.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="Cache.h"><param name="Local" value="_cache_8h.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="Cfg.h"><param name="Local" value="_cfg_8h.html"><param name="ImageNumber" value="11"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Dev.h"><param name="Local" value="_dev_8h.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="FrameQ.h"><param name="Local" value="_frame_q_8h.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="FrameQ_ShMem.h"><param name="Local" value="_frame_q___sh_mem_8h.html"><param name="ImageNumber" value="11"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="FrameQBufMgr.h"><param name="Local" value="_frame_q_buf_mgr_8h.html"><param name="ImageNumber" value="11"></OBJECT>

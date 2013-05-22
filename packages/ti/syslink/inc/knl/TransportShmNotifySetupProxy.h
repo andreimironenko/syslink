@@ -56,7 +56,7 @@
 
 
 /* Module headers */
-#include <TransportShmNotifySetup.h>
+#include "TransportShmNotifySetup.h"
 
 
 #if defined (__cplusplus)

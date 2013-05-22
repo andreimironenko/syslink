@@ -66,7 +66,7 @@
 #endif
 
 #if defined (CONFIG_PREEMPT_RT)
-#define RT_KERNEL
+/* #define RT_KERNEL */
 #endif
 
 #endif /* defined(SYSLINK_BUILDOS_LINUX) */

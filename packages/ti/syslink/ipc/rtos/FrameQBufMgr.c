@@ -217,7 +217,9 @@ static
 #endif
 FrameQBufMgr_ModuleObject FrameQBufMgr_module_obj = {
     .nameServer                   = NULL,
-    .defaultCfg.eventNo           = FrameQBufMgr_NOTIFY_RESERVED_EVENTNO
+    .defaultCfg.eventNo           = FrameQBufMgr_NOTIFY_RESERVED_EVENTNO,
+    .defaultCfg.usedefaultgate    = FALSE,
+    .defaultCfg.maxInstances      = FrameQBufMgr_MAXINSTANCES
 };
 
 
@@ -258,12 +260,18 @@ Int32 FrameQBufMgr_getConfig(FrameQBufMgr_Config *cfg)
     GT_1trace (curTrace, GT_ENTER, "FrameQBufMgr_getConfig", cfg);
 
     if (NULL != cfg) {
+
         /* (If setup has not yet been called) */
         if (FrameQBufMgr_module->refCount == 0) {
+
             /* Return the default static config values */
-            cfg->eventNo        = FrameQBufMgr_NOTIFY_RESERVED_EVENTNO;
-//            cfg->useNameServer  = TRUE;
-            cfg->maxInstances   = FrameQBufMgr_MAXINSTANCES;
+            memcpy(cfg, &FrameQBufMgr_module->defaultCfg,
+                    sizeof(FrameQBufMgr_Config));
+
+            /* cfg->eventNo        = FrameQBufMgr_NOTIFY_RESERVED_EVENTNO;
+             * cfg->usedefaultgate = FALSE;
+             * cfg->maxInstances   = FrameQBufMgr_MAXINSTANCES;
+             */
         }
         else {
             /* Return the currently configured parameters */

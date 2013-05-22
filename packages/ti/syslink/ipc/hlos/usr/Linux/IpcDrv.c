@@ -53,6 +53,7 @@
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/utils/Gate.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/ipc/Ipc.h>
@@ -110,7 +111,7 @@ Int IpcDrv_open(Void)
     if (IpcDrv_refCount == 0) {
 
         /* open the ipc driver */
-        IpcDrv_handle = open(IPC_DRIVER_NAME, O_SYNC | O_RDWR);
+        IpcDrv_handle = Dev_pollOpen(IPC_DRIVER_NAME, O_SYNC | O_RDWR);
 
         if (IpcDrv_handle < 0) {
             status = Ipc_E_OSFAILURE;

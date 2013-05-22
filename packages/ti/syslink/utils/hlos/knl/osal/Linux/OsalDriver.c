@@ -70,6 +70,7 @@
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <asm/uaccess.h>
+
 #ifndef CONFIG_MMU
 #include <linux/backing-dev.h>
 #endif
@@ -162,6 +163,160 @@ static int OsalDrv_close (struct inode * inode, struct file * filp);
 /* Linux driver function to map memory regions to user space. */
 static int OsalDrv_mmap (struct file * filp, struct vm_area_struct * vma);
 
+typedef struct OsalDrv_NormalMemory {
+    UInt32       addr;
+    UInt32       size;
+} OsalDrv_NormalMemory;
+
+static Bool _OsalDrv_isNormalMemory(UInt32 addr, UInt32 size);
+/*
+ * This table defines all memory ranges that need to be mapped as Normal memory
+ */
+#if defined(SYSLINK_VARIANT_TI814X) 
+#define ADDR_TABLE_SIZE 6
+static OsalDrv_NormalMemory addrTable[ADDR_TABLE_SIZE] =
+    {
+        { /* OCMC */
+            .addr     = 0x40300000,
+            .size     = 0x20000
+        },
+        { /* DSP L2 RAM */
+            .addr     = 0x40800000,
+            .size     = 0x40000
+        },
+        { /* DSP L1P RAM */
+            .addr     = 0x40E00000,
+            .size     = 0x8000
+        },
+        { /* DSP L1D RAM */
+            .addr     = 0x40F00000,
+            .size     = 0x8000
+        },
+        { /* Ducati L2 */
+            .addr     = 0x55020000,
+            .size     = 0x10000
+        },
+        { /* DDR */
+            .addr     = 0x80000000,
+            .size     = 0x80000000
+        },
+    };
+#elif defined(SYSLINK_VARIANT_TI816X)
+#define ADDR_TABLE_SIZE 7
+static OsalDrv_NormalMemory addrTable[ADDR_TABLE_SIZE] =
+    {
+        { /* OCMC0 */
+            .addr     = 0x40300000,
+            .size     = 0x40000
+        },
+        { /* OCMC1 */
+            .addr     = 0x40400000,
+            .size     = 0x40000
+        },
+        { /* DSP L2 RAM */
+            .addr     = 0x40800000,
+            .size     = 0x40000
+        },
+        { /* DSP L1P RAM */
+            .addr     = 0x40E00000,
+            .size     = 0x8000
+        },
+        { /* DSP L1D RAM */
+            .addr     = 0x40F00000,
+            .size     = 0x8000
+        },
+        { /* Ducati L2 */
+            .addr     = 0x55020000,
+            .size     = 0x40000
+        },
+        { /* DDR */
+            .addr     = 0x80000000,
+            .size     = 0x80000000
+        },
+    };
+#elif defined(SYSLINK_VARIANT_TI811X)
+#define ADDR_TABLE_SIZE 6
+static OsalDrv_NormalMemory addrTable[ADDR_TABLE_SIZE] =
+    {
+        { /* OCMC */
+            .addr     = 0x40300000,
+            .size     = 0x40000
+        },
+        { /* DSP L2 RAM */
+            .addr     = 0x40800000,
+            .size     = 0x40000
+        },
+        { /* DSP L1P RAM */
+            .addr     = 0x40E00000,
+            .size     = 0x8000
+        },
+        { /* DSP L1D RAM */
+            .addr     = 0x40F00000,
+            .size     = 0x8000
+        },
+        { /* Ducati L2 */
+            .addr     = 0x55020000,
+            .size     = 0x10000
+        },
+        { /* DDR */
+            .addr     = 0x80000000,
+            .size     = 0x80000000
+        },
+    };
+#elif defined(SYSLINK_VARIANT_TI813X)
+#define ADDR_TABLE_SIZE 3
+static OsalDrv_NormalMemory addrTable[ADDR_TABLE_SIZE] =
+    {
+        { /* OCMC */
+            .addr     = 0x40300000,
+            .size     = 0x40000
+        },
+        { /* Ducati L2 */
+            .addr     = 0x55020000,
+            .size     = 0x10000
+        },
+        { /* DDR */
+            .addr     = 0x80000000,
+            .size     = 0x80000000
+        },
+    };
+#elif defined(SYSLINK_PLATFORM_OMAP3530)
+#define ADDR_TABLE_SIZE 5
+static OsalDrv_NormalMemory addrTable[ADDR_TABLE_SIZE] =
+    {
+        { /* OCMC */
+            .addr     = 0x40200000,
+            .size     = 0x10000
+        },
+        { /* DSP L2 RAM */
+            .addr     = 0x5C7F8000,
+            .size     = 0x18000
+        },
+        { /* DSP L1P RAM */
+            .addr     = 0x5CE00000,
+            .size     = 0x8000
+        },
+        { /* DSP L1D RAM */
+            .addr     = 0x5CF04000,
+            .size     = 0x14000
+        },
+        { /* SDRAM */
+            .addr     = 0x70000000,
+            .size     = 0x90000000
+        },
+    };
+
+#else
+#define ADDR_TABLE_SIZE 0
+static OsalDrv_NormalMemory addrTable[] =
+    {
+        { /* DDR */
+            .addr     = 0x80000000,
+            .size     = 0x80000000
+        },
+    };
+
+#endif
 /*!
  *  @brief  Linux driver function to ioctl of the driver object.
  */
@@ -679,6 +834,7 @@ OsalDrv_mmap (struct file * filp, struct vm_area_struct * vma)
      * Set all regions as non-cached except for sharedRegion based on
      * cacheEnable setting
      */
+
     vma->vm_page_prot = pgprot_noncached (vma->vm_page_prot);
     physAddr = vma->vm_pgoff << PAGE_SHIFT;
 
@@ -700,9 +856,28 @@ OsalDrv_mmap (struct file * filp, struct vm_area_struct * vma)
     GT_2trace (curTrace, GT_1CLASS,
                "OsalDrv_mmap(): setting cache %s for physical address %p\n",
                isCached ? "enabled" : "disabled", physAddr);
-    if (isCached == TRUE) {
-        vma->vm_page_prot = __pgprot(pgprot_val(vma->vm_page_prot) |
-            (L_PTE_MT_WRITETHROUGH | L_PTE_MT_BUFFERABLE));
+
+    if (_OsalDrv_isNormalMemory((UInt32) physAddr, 
+                                 vma->vm_end - vma->vm_start)) {
+        /* 
+         * Map as Normal Memory (as opposed to Strongly Ordered) 
+         */
+        if (isCached == TRUE) {
+            vma->vm_page_prot = __pgprot(pgprot_val(vma->vm_page_prot) |
+                L_PTE_MT_WRITEBACK);
+        } 
+        else {
+            /* Un-cached */ 
+            vma->vm_page_prot = __pgprot(pgprot_val(vma->vm_page_prot) |
+                L_PTE_MT_BUFFERABLE );
+        }
+    } 
+    else {
+        /* Do not map as Normal Memory */
+        if (isCached == TRUE) {
+            vma->vm_page_prot = __pgprot(pgprot_val(vma->vm_page_prot) |
+                (L_PTE_MT_WRITETHROUGH | L_PTE_MT_BUFFERABLE));
+        }
     }
 #endif
 
@@ -817,4 +992,30 @@ long OsalDrvDrv_ioctl (struct file *  filp,
 
     /*! @retval 0 Operation successfully completed. */
     return osStatus;
+}
+
+/*!
+ *  @brief      Checks if memory range should be mapped as Normal memory
+ */
+static Bool
+_OsalDrv_isNormalMemory(UInt32 addr, UInt32 size) {
+    Bool   ret = FALSE;
+    UInt32 upperBound;
+    Int    i;
+
+    for (i = 0; i < ADDR_TABLE_SIZE; i++) {
+        upperBound = addrTable[i].addr + addrTable[i].size - 1;
+        /*
+         * If the range to be mapped is entirely within a range to be mapped as
+         * Normal, then do it. Otherwise be conservative and mapped as strongly
+         * ordered.
+         */
+        if ((addr >= addrTable[i].addr) &&
+            (addr + size - 1 <= upperBound)) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    return (ret);
 }

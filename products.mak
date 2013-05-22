@@ -61,6 +61,16 @@ SYSLINK_BUILD_DEBUG=1
 SYSLINK_BUILD_OPTIMIZE=0
 SYSLINK_TRACE_ENABLE=1
 
+# SysLink HLOS driver Notify options (choose one): NOTIFYDRIVERSHM,
+#    NOTIFYDRIVERCIRC
+#
+SYSLINK_NOTIFYDRIVER=NOTIFYDRIVERSHM
+
+# SysLink HLOS driver MessageQ Transport options (choose one): TRANSPORTSHM,
+#    TRANSPORTSHMNOTIFY, TRANSPORTSHMCIRC
+#
+SYSLINK_TRANSPORT=TRANSPORTSHM
+
 # Set SDK type when building for a TI SDK kit (choose one): EZSDK or NONE
 #
 SDK = _your_sdk_

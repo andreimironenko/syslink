@@ -88,23 +88,22 @@
  */
 
 /*!
- *  @def    DM8168_DM8168_NUMPROCS
  *  @brief  Number of processors supported on this platform
  */
 #define DM8168_NUMPROCS 3
+
 /*!
- *  @def    DM8168_DM8168_INDEX_DSP
  *  @brief  Dsp index.
  */
 #define DM8168_INDEX_DSP 0
+
 /*!
- *  @def    DM8168_INDEX_VIDEOM3
  *  @brief  M3Video index.
  */
 #define DM8168_INDEX_VIDEOM3 1
+
 /*!
- *  @def    DM8168_INDEX_VPSSM3
- *  @brief  M3Dss index.
+ *  @brief  M3Vpss index.
  */
 #define DM8168_INDEX_VPSSM3 2
 

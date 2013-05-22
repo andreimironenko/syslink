@@ -53,6 +53,7 @@
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/utils/Memory.h>
+#include <ti/syslink/utils/Dev.h>
 #include <ti/ipc/MultiProc.h>
 
 /* Module specific header files */
@@ -116,7 +117,7 @@ SharedRegionDrv_open (Void)
         /* TBD: Protection for refCount. */
         SharedRegionDrv_refCount++;
 
-        SharedRegionDrv_handle = open (SHAREDREGION_DRIVER_NAME,
+        SharedRegionDrv_handle = Dev_pollOpen (SHAREDREGION_DRIVER_NAME,
                                        O_SYNC | O_RDWR);
         if (SharedRegionDrv_handle < 0) {
             perror ("SharedRegion driver open: ");

@@ -1,5 +1,5 @@
 [OPTIONS]
-Compiled file=syslink_2_20_00_14.chm
+Compiled file=syslink_2_20_02_20.chm
 Compatibility=1.1
 Full-text search=Yes
 Contents file=index.hhc
@@ -21,6 +21,7 @@ ___memory_defs_8h_source.html
 ___memory_o_s_8h_source.html
 _cache_8h_source.html
 _cfg_8h_source.html
+_dev_8h_source.html
 _frame_q_8h_source.html
 _frame_q___sh_mem_8h_source.html
 _frame_q_buf_mgr_8h_source.html
@@ -70,6 +71,7 @@ ___memory_defs_8h.html
 ___memory_o_s_8h.html
 _cache_8h.html
 _cfg_8h.html
+_dev_8h.html
 disclaimer_8dox.html
 doxygen_8txt.html
 _frame_q_8h.html
@@ -192,6 +194,7 @@ struct_heap_multi_buf_m_p___params.html
 struct_heap_queue_mgr___params.html
 struct_i_gate_provider___object.html
 struct_i_heap___object__tag.html
+struct_ipc___terminate.html
 struct_ipc_mem_mgr___config__t.html
 struct_list___elem__tag.html
 struct_list___object__tag.html
@@ -241,6 +244,7 @@ globals_0x74.html
 globals_0x75.html
 globals_0x76.html
 globals_func.html
+globals_func_0x64.html
 globals_func_0x66.html
 globals_func_0x67.html
 globals_func_0x68.html

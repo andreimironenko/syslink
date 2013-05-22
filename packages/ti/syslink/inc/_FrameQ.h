@@ -3,8 +3,6 @@
  *
  *  @brief      Defines for interfaces for FrameQ module.
  *
- *              TODO: write description
- *
  *
  */
 /* 
@@ -69,7 +67,6 @@ extern "C" {
  * =============================================================================
  */
 /*!
- *  @def    FrameQ_MODULEID
  *  @brief  Module ID for FrameQ.
  */
 #define FrameQ_MODULEID        0x6e6f
@@ -78,14 +75,12 @@ extern "C" {
 #define FRAMEQ_NAMESERVERNAME  "FrameQ"
 
 /*!
- *  @def    FRAMEQ_CREATED
  *  @brief  Constant value to indicate that FrameQ instance is created.
  */
 #define FrameQ_CREATED       (0x05251995) /* Should be same as rtos
                                            * implementation
                                            */
 /*!
- *  @def    FrameQ_VERSION
  *  @brief  Version of FrameQ Module.
  */
 #define FrameQ_VERSION                (1u) /* Should be same as rtos
@@ -93,7 +88,6 @@ extern "C" {
                                             */
 
 /*!
- *  @def    FrameQ_STATIC_CREATE
  *  @brief  One of the FrameQ instance create types.
  *          It indicates FrameQ instance is created statically.
  */
@@ -101,14 +95,13 @@ extern "C" {
                                               * implementation
                                               */
 /*!
- *  @def    STATIC_CREATE_USEDREGION
  *  @brief  One of the FrameQ instance create types.
  *          It indicates FrameQ instance is created statically using shared
  *          region.
  */
 #define STATIC_CREATE_USEDREGION       (0x2)
+
 /*!
- *  @def    FrameQ_DYNAMIC_CREATE
  *  @brief  One of the FrameQ instance create types.
  *          It indicates FrameQ instance is created dynamically.
  */
@@ -123,7 +116,6 @@ extern "C" {
 #define FrameQ_DYNAMIC_CREATE_USEDREGION (0x8u)
 
 /*!
- *  @def    FrameQ_STATIC_OPEN
  *  @brief  One of the FrameQ instance open types.
  *          It indicates FrameQ instance is opened statically.
  */
@@ -132,7 +124,6 @@ extern "C" {
                                                */
 
 /*!
- *  @def    FrameQ_DYNAMIC_OPEN
  *  @brief  One of the FrameQ instance open types.
  *          It indicates FrameQ instance is opened dynamically.
  */
@@ -223,7 +214,7 @@ typedef  struct FrameQ_WriterClient_Tag {
 } FrameQ_WriterClient;
 
 /*!
- *  @brief  Reader client structure  in shared memory.
+ *  @brief  Reader client structure in shared memory.
  */
 typedef  struct FrameQ_ReaderClient_Tag {
     volatile UInt32      isValid;
@@ -245,8 +236,8 @@ typedef  struct FrameQ_ReaderClient_Tag {
 
 
 /*!
- *  @brief  Structure defining Additional specific parameters that name server maintains
-	 * along with the interface  type for ShMem implementation.
+ *  @brief  Structure defining additional specific parameters that name server maintains
+	 * along with the interface type for ShMem implementation.
  */
 typedef  struct FrameQ_ShMem_InstInfoParams_tag  {
         Ptr        sharedAddr;
@@ -254,7 +245,7 @@ typedef  struct FrameQ_ShMem_InstInfoParams_tag  {
         Ptr        instGateMPAddr;
         Ptr        frameQBufMgrSharedAddr;
         UInt8      frameQBufMgrName[FrameQ_MAX_NAMELEN];
-	    Ptr        cliGateMPAddr;
+        Ptr        cliGateMPAddr;
 }FrameQ_ShMem_InstInfoParams;
 
 /*!
@@ -309,7 +300,7 @@ typedef Int32
  * @brief   Function to allocate frames from multiple free pools of a plugged in
  *          FrameQBufMgr.
  *
- *          After API returns,numframes will denotes  the number of successfully
+ *          After API returns,numframes will denotes the number of successfully
  *          allocated frames.
  *
  * @param  handle   Instance handle.
@@ -322,18 +313,18 @@ typedef Int32
                      UInt32                freeQId[],
                      UInt8               *numFrames);
 /*
- *  @brief Function to free a frame .
+ *  @brief Function to free a frame.
  *         Allow only writers/readers to call  this API.
- * @param framePtr    Frame to be duplicated.
  *
+ * @param framePtr    Frame to be duplicated.
  */
 typedef Int32
 (*fq_free) (Ptr handle, FrameQ_Frame  frame);
 /*
  *  @brief Function to free multiple frames .
  *         Allow only writers/readers to call  this API.
- * @param framePtr    Frame to be duplicated.
  *
+ * @param framePtr    Frame to be duplicated.
  */
 typedef Int32
 (*fq_freev) (Ptr  handle,
@@ -414,6 +405,7 @@ typedef Ptr
 /*!
  * @brief Function to get the sharedMemBaseAddress of the clientNotifyMgr
  *        instance used for this instance.
+ *
  * @param handle      FrameQ instance Handle.
  */
 typedef Ptr

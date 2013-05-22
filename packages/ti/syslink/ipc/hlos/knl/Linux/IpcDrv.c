@@ -91,6 +91,7 @@
 /* platform friend function */
 extern Void Platform_terminateEventConfig(UInt16 procId, UInt32 *eventId,
         UInt16 *lineId);
+extern Void Platform_terminateHandler(UInt16 procId);
 
 
 /** ============================================================================
@@ -141,6 +142,8 @@ typedef struct {
     List_Elem   elem;
     Osal_Pid    pid;
     UInt32      payload;
+    UInt16      procId;
+    Int         policy;
 } IpcDrv_Event;
 
 typedef struct {
@@ -389,7 +392,6 @@ int IpcDrv_drvclose(struct inode *inode, struct file *filp)
     UInt8 rtid = 0;
     Int idx, bit;
     UInt32 mask;
-    UInt16 procId, numProcs;
     UInt32 eventId;
     UInt16 lineId;
 
@@ -409,15 +411,17 @@ int IpcDrv_drvclose(struct inode *inode, struct file *filp)
         if (event->pid == pid) {
             List_remove(IpcDrv_state.events, elem);
 
-            /* send terminate event to each remote processor */
-            numProcs = MultiProc_getNumProcessors();
+            GT_assert(curTrace, (Ipc_isAttached(event->procId)));
 
-            for (procId = 0; procId < numProcs; procId++) {
-                if ((procId != MultiProc_self()) && Ipc_isAttached(procId)) {
+            switch (event->policy) {
+                case Ipc_TERMINATEPOLICY_STOP:
+                    Platform_terminateHandler(event->procId);
+                    break;
 
-                    /* send terminate event to slave */
-                    Platform_terminateEventConfig(procId, &eventId, &lineId);
-                    status = Notify_sendEvent(procId, lineId, eventId,
+                case Ipc_TERMINATEPOLICY_NOTIFY:
+                    Platform_terminateEventConfig(event->procId, &eventId,
+                            &lineId);
+                    status = Notify_sendEvent(event->procId, lineId, eventId,
                             event->payload, FALSE);
 
                     if (status < 0) {
@@ -425,7 +429,12 @@ int IpcDrv_drvclose(struct inode *inode, struct file *filp)
                                 "IpcDrv_drvclose", status,
                                 "failed to send terminate event");
                     }
-                }
+                    break;
+
+                default:
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "IpcDrv_drvclose", -1, "unknown terminate policy");
+                    break;
             }
 
             Memory_free(NULL, event, sizeof(IpcDrv_Event));
@@ -589,8 +598,10 @@ static long IpcDrv_drvioctl(struct file *filp, unsigned int cmd,
 
             /* add event to list */
             if (status == Ipc_S_SUCCESS) {
-                event->pid = cmdArgs.args.addTerminateEvent.pid;
-                event->payload = cmdArgs.args.addTerminateEvent.payload;
+                event->pid = cmdArgs.args.addTermEvent.pid;
+                event->payload = cmdArgs.args.addTermEvent.payload;
+                event->procId = cmdArgs.args.addTermEvent.procId;
+                event->policy = cmdArgs.args.addTermEvent.policy;
 
                 List_put(IpcDrv_state.events, (List_Elem *)(event));
             }
@@ -607,16 +618,18 @@ static long IpcDrv_drvioctl(struct file *filp, unsigned int cmd,
             gate = (IGateProvider_Handle)(IpcDrv_state.gate);
             key = IGateProvider_enter(gate);
 
-            /* remove all events from the list for the given pid */
+            /* find and remove the requested event from the list */
             while ((elem = List_next(IpcDrv_state.events, elem)) != NULL) {
                 event = (IpcDrv_Event *)elem;
 
-                if (event->pid == cmdArgs.args.removeTerminateEvent.pid) {
+                if ((event->pid == cmdArgs.args.removeTermEvent.pid) &&
+                    (event->procId == cmdArgs.args.removeTermEvent.procId)) {
+
                     List_remove(IpcDrv_state.events, elem);
                     Memory_free(NULL, event, sizeof(IpcDrv_Event));
 
-                    /* elem was removed from list, must start over again */
-                    elem = NULL;
+                    /* done, exit the loop */
+                    break;
                 }
             }
 

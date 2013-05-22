@@ -53,6 +53,7 @@
 
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/ipc/MultiProc.h>
@@ -114,7 +115,7 @@ MultiProcDrv_open (Void)
         /* TBD: Protection for refCount. */
         MultiProcDrv_refCount++;
 
-        MultiProcDrv_handle = open (MULTIPROC_DRIVER_NAME,
+        MultiProcDrv_handle = Dev_pollOpen (MULTIPROC_DRIVER_NAME,
                                              O_SYNC | O_RDWR);
         if (MultiProcDrv_handle < 0) {
             perror (MULTIPROC_DRIVER_NAME);

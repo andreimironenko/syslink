@@ -74,19 +74,16 @@ extern "C" {
 
 
 /*!
- *  @def    BPA_MODULEID
  *  @brief  Unique module ID.
  */
 #define BPA_MODULEID      (0xCD41)
 
 /*!
- *  @def    BPA_STATUSCODEBASE
  *  @brief  Error code base for buddy page allocator module.
  */
 #define BPA_STATUSCODEBASE (BPA_MODULEID << 12u)
 
 /*!
- *  @def    BPA_MAKE_ERROR
  *  @brief  Macro to make error code.
  */
 #define BPA_MAKE_FAILURE(x) ((Int) (  0x80000000                               \
@@ -94,25 +91,21 @@ extern "C" {
                                     + (x)))
 
 /*!
- *  @def    BPA_MAKE_SUCCESS
  *  @brief  Macro to make success code.
  */
 #define BPA_MAKE_SUCCESS(x) (BPA_STATUSCODEBASE + (x))
 
 /*!
- *  @def    BPA_E_INVALIDARG
  *  @brief  Argument passed to a function is invalid.
  */
 #define BPA_E_INVALIDARG      BPA_MAKE_FAILURE(1)
 
 /*!
- *  @def    BPA_E_MEMORY
  *  @brief  Memory allocation failed.
  */
 #define BPA_E_MEMORY          BPA_MAKE_FAILURE(2)
 
 /*!
- *  @def    BPA_SUCCESS
  *  @brief  Operation successful.
  */
 #define BPA_SUCCESS           BPA_MAKE_SUCCESS(0)

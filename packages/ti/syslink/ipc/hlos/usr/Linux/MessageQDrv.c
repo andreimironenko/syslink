@@ -52,6 +52,7 @@
 
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/ipc/MessageQ.h>
@@ -112,7 +113,7 @@ Int MessageQDrv_open(Void)
         MessageQDrv_refCount++;
 
         /* open the messageq driver */
-        MessageQDrv_handle = open(MESSAGEQ_DRIVER_NAME, O_SYNC | O_RDWR);
+        MessageQDrv_handle = Dev_pollOpen(MESSAGEQ_DRIVER_NAME, O_SYNC | O_RDWR);
 
         if (MessageQDrv_handle < 0) {
             status = MessageQ_E_OSFAILURE;

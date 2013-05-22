@@ -53,6 +53,7 @@
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/utils/IHeap.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/syslink/inc/_HeapBufMP.h>
@@ -112,8 +113,9 @@ Int HeapBufMPDrv_open(Void)
     /* TBD: Protection for refCount. */
     if (HeapBufMPDrv_refCount == 0) {
 
-        /* open the heapbufmp driver */
-        HeapBufMPDrv_handle = open(HEAPBUF_DRIVER_NAME, O_SYNC | O_RDWR);
+        /* open the driver */
+        HeapBufMPDrv_handle = Dev_pollOpen(HEAPBUF_DRIVER_NAME,
+                O_SYNC | O_RDWR);
 
         if (HeapBufMPDrv_handle < 0) {
             status = HeapBufMP_E_OSFAILURE;

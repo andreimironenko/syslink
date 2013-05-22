@@ -56,7 +56,7 @@
 
 
 /* Module headers */
-#include <TransportShmCircSetup.h>
+#include "TransportShmCircSetup.h"
 
 
 #if defined (__cplusplus)

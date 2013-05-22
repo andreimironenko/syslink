@@ -92,11 +92,10 @@ Void GateSpinlock_leave (GateSpinlock_Handle handle, UInt32 key);
 /*!
  *  @brief      Function to create a Gate based on Spinlock.
  *
- *  @sa         GateSpinlock_Instance_finalize
+ *  @sa         GateSpinlock_Instance_finalize()
  */
-Int
-GateSpinlock_Instance_init (      GateSpinlock_Object * obj,
-                            const GateSpinlock_Params * params)
+Int GateSpinlock_Instance_init(GateSpinlock_Object *obj,
+        const GateSpinlock_Params *params)
 {
     Int status = 0;
 
@@ -104,24 +103,20 @@ GateSpinlock_Instance_init (      GateSpinlock_Object * obj,
 
     (Void) params; /* params are not used. */
 
-        IGateProvider_ObjectInitializer (obj, GateSpinlock);
+    IGateProvider_ObjectInitializer(obj, GateSpinlock);
 
-        obj->sHandle = OsalSpinlock_create (OsalSpinlock_Type_Normal);
+    obj->sHandle = OsalSpinlock_create(OsalSpinlock_Type_Normal);
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-        if (obj->sHandle == NULL) {
-                status = 1;
-            GT_setFailureReason (curTrace,
-                                 GT_4CLASS,
-                                 "GateSpinlock_Instance_init",
-                                 GateSpinlock_E_FAIL,
-                                 "Unable to create Osal Spinlock object!");
+    if (obj->sHandle == NULL) {
+        status = 1;
+        GT_setFailureReason(curTrace, GT_4CLASS, "GateSpinlock_Instance_init",
+                GateSpinlock_E_FAIL, "Unable to create Osal Spinlock object!");
         }
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
 
-    GT_1trace (curTrace, GT_LEAVE, "GateSpinlock_Instance_init", status);
+    GT_1trace(curTrace, GT_LEAVE, "GateSpinlock_Instance_init", status);
 
-    /*! @retval 0 Operation was successful */
-    return status;
+    return (status);
 }
 
 
@@ -132,8 +127,7 @@ GateSpinlock_Instance_init (      GateSpinlock_Object * obj,
  *
  *  @sa         GateSpinlock_Instance_init
  */
-Void
-GateSpinlock_Instance_finalize (GateSpinlock_Handle handle, Int status)
+Void GateSpinlock_Instance_finalize(GateSpinlock_Handle handle, Int status)
 {
     GT_2trace (curTrace, GT_ENTER, "GateSpinlock_Instance_finalize",
                handle, status);
@@ -199,12 +193,12 @@ GateSpinlock_enter (GateSpinlock_Handle handle)
 
 
 /*!
- *  @brief      Function to leave a Gate Spinlock.
+ *  @brief      Leave a GateSpinlock.
  *
- *  @param      handle  Handle to previously created gate Spinlock instance.
- *  @param      key       Flags.
+ *  @param      handle  Handle to previously created GateSpinlock instance
+ *  @param      key     Flags
  *
- *  @sa         GateSpinlock_enter
+ *  @sa         GateSpinlock_enter()
  */
 Void
 GateSpinlock_leave (GateSpinlock_Handle handle, UInt32 key)
@@ -215,11 +209,8 @@ GateSpinlock_leave (GateSpinlock_Handle handle, UInt32 key)
 
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     if (handle == NULL) {
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "GateSpinlock_leave",
-                             GateSpinlock_E_INVALIDARG,
-                             "Handle passed is invalid!");
+        GT_setFailureReason(curTrace, GT_4CLASS, "GateSpinlock_leave",
+                GateSpinlock_E_INVALIDARG, "Handle passed is invalid!");
     }
     else {
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
@@ -232,5 +223,5 @@ GateSpinlock_leave (GateSpinlock_Handle handle, UInt32 key)
 }
 
 
-/* Override the IObject interface to define craete and delete APIs */
+/* Override the IObject interface to define create and delete APIs */
 IOBJECT_CREATE0 (GateSpinlock);

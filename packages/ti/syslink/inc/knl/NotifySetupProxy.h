@@ -50,8 +50,8 @@
 
 
 
-#if !defined (_NOTIFYSETUPPROXY_H_0x5f84)
-#define _NOTIFYSETUPPROXY_H_0x5f84
+#if !defined (_NOTIFYSETUPPROXY_H)
+#define _NOTIFYSETUPPROXY_H
 
 
 #if defined (__cplusplus)
@@ -64,78 +64,12 @@ extern "C" {
  * =============================================================================
  */
 #if defined (SYSLINK_NOTIFYDRIVER_CIRC)
-#include <NotifyCircSetupProxy.h>
-#else /* if defined (SYSLINK_USENOTIFYCIRC) */
-/* Defaults to be used for all devices */
-
-#if defined (SYSLINK_PLATFORM_OMAPL1XX)
-/* Function that will be called in Notify_attach */
-extern Int NotifySetupOmapl1xx_attach (UInt16 procId, Ptr sharedAddr);
-#define Notify_SetupProxy_attach(procId, sharedAddr) NotifySetupOmapl1xx_attach(procId, sharedAddr)
-
-/* Function that will be called in Notify_detach */
-extern Int NotifySetupOmapl1xx_detach (UInt16 procId);
-#define Notify_SetupProxy_detach NotifySetupOmapl1xx_detach
-
-/* Shared Memory Required for Notify setup */
-extern SizeT NotifySetupOmapl1xx_sharedMemReq (UInt16 procId, Ptr sharedAddr);
-#define Notify_SetupProxy_sharedMemReq(procId, sharedAddr) NotifySetupOmapl1xx_sharedMemReq(procId, sharedAddr)
-
-/* Is interrupt line available? */
-extern Bool NotifySetupOmapl1xx_intLineAvailable(UInt16 remoteProcId);
-#define Notify_SetupProxy_intLineAvailable(remoteProcId) NotifySetupOmapl1xx_intLineAvailable(remoteProcId)
-
-/* numIntLines? */
-extern UInt16 NotifySetupOmapl1xx_numIntLines(UInt16 remoteProcId);
-#define Notify_SetupProxy_numIntLines(remoteProcId) NotifySetupOmapl1xx_numIntLines(remoteProcId)
-
-#endif /* if defined (SYSLINK_PLATFORM_OMAPL1XX) */
-
-#if defined (SYSLINK_PLATFORM_OMAP3530)
-/* Function that will be called in Notify_start */
-extern Int NotifySetupOmap3530_attach (UInt16 procId, Ptr sharedAddr);
-#define Notify_SetupProxy_attach(procId, sharedAddr) NotifySetupOmap3530_attach(procId, sharedAddr)
-
-/* Function that will be called in Notify_stop */
-extern Int NotifySetupOmap3530_detach (UInt16 procId);
-#define Notify_SetupProxy_detach NotifySetupOmap3530_detach
-
-/* Shared Memory Required for Notify setup */
-extern SizeT NotifySetupOmap3530_sharedMemReq (UInt16 procId, Ptr sharedAddr);
-#define Notify_SetupProxy_sharedMemReq(procId, sharedAddr) NotifySetupOmap3530_sharedMemReq(procId, sharedAddr)
-
-/* Is interrupt line available? */
-extern Bool NotifySetupOmap3530_intLineAvailable(UInt16 remoteProcId);
-#define Notify_SetupProxy_intLineAvailable(remoteProcId) NotifySetupOmap3530_intLineAvailable(remoteProcId)
-
-/* numIntLines? */
-extern UInt16 NotifySetupOmap3530_numIntLines(UInt16 remoteProcId);
-#define Notify_SetupProxy_numIntLines(remoteProcId) NotifySetupOmap3530_numIntLines(remoteProcId)
-
-#endif /* if defined (SYSLINK_PLATFORM_OMAPL1XX) */
-
-#if defined (SYSLINK_PLATFORM_TI81XX)
-extern Int NotifySetupDm8168_attach (UInt16 procId, Ptr sharedAddr);
-#define Notify_SetupProxy_attach(procId, sharedAddr) NotifySetupDm8168_attach(procId, sharedAddr)
-
-/* Function that will be called in Notify_stop */
-extern Int NotifySetupDm8168_detach (UInt16 procId);
-#define Notify_SetupProxy_detach NotifySetupDm8168_detach
-
-/* Shared Memory Required for Notify setup */
-extern SizeT NotifySetupDm8168_sharedMemReq (UInt16 procId, Ptr sharedAddr);
-#define Notify_SetupProxy_sharedMemReq(procId, sharedAddr) NotifySetupDm8168_sharedMemReq(procId, sharedAddr)
-
-/* Is interrupt line available? */
-extern Bool NotifySetupDm8168_intLineAvailable(UInt16 remoteProcId);
-#define Notify_SetupProxy_intLineAvailable(remoteProcId) NotifySetupDm8168_intLineAvailable(remoteProcId)
-
-/* numIntLines? */
-extern UInt16 NotifySetupDm8168_numIntLines(UInt16 remoteProcId);
-#define Notify_SetupProxy_numIntLines(remoteProcId) NotifySetupDm8168_numIntLines(remoteProcId)
-
-#endif /* if defined (SYSLINK_PLATFORM_OMAPL1XX) */
-#endif /* if defined (SYSLINK_NOTIFYDRIVER_CIRC) */
+#include "NotifyCircSetupProxy.h"
+#elif defined (SYSLINK_NOTIFYDRIVER_SHM)
+#include "NotifyShmSetupProxy.h"
+#else 
+#error No Notify Driver configured
+#endif
 
 #if defined (__cplusplus)
 }

@@ -148,7 +148,36 @@ static Bool _MemoryOS_isNormal(UInt32 addr, UInt32 size);
 /*
  * This table defines all memory ranges that need to be mapped as Normal memory
  */
-#if defined(SYSLINK_VARIANT_TI814X) || defined(SYSLINK_VARIANT_TI811X)
+#if defined(SYSLINK_VARIANT_TI814X) 
+#define ADDR_TABLE_SIZE 6
+static MemoryOS_NormalMemory addrTable[ADDR_TABLE_SIZE] =
+    {
+        { /* OCMC */
+            .addr     = 0x40300000,
+            .size     = 0x20000
+        },
+        { /* DSP L2 RAM */
+            .addr     = 0x40800000,
+            .size     = 0x40000
+        },
+        { /* DSP L1P RAM */
+            .addr     = 0x40E00000,
+            .size     = 0x8000
+        },
+        { /* DSP L1D RAM */
+            .addr     = 0x40F00000,
+            .size     = 0x8000
+        },
+        { /* Ducati L2 */
+            .addr     = 0x55020000,
+            .size     = 0x10000
+        },
+        { /* DDR */
+            .addr     = 0x80000000,
+            .size     = 0x80000000
+        },
+    };
+#elif defined(SYSLINK_VARIANT_TI811X)
 #define ADDR_TABLE_SIZE 6
 static MemoryOS_NormalMemory addrTable[ADDR_TABLE_SIZE] =
     {
@@ -170,7 +199,7 @@ static MemoryOS_NormalMemory addrTable[ADDR_TABLE_SIZE] =
         },
         { /* Ducati L2 */
             .addr     = 0x55020000,
-            .size     = 0x40000
+            .size     = 0x10000
         },
         { /* DDR */
             .addr     = 0x80000000,

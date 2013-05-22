@@ -62,6 +62,7 @@
 #include <ti/syslink/utils/Memory.h>
 #include <ti/syslink/utils/Cache.h>
 #include <ti/syslink/utils/String.h>
+#include <ti/syslink/utils/Dev.h>
 #include <ti/syslink/utils/IGateProvider.h>
 
 /* Utilities & OSAL headers */
@@ -130,7 +131,7 @@ Int RingIODrv_open(Void)
         /* TBD: Protection for refCount. */
         RingIODrv_refCount++;
 
-        RingIODrv_handle = open(RINGIO_DRIVER_NAME, O_SYNC | O_RDWR);
+        RingIODrv_handle = Dev_pollOpen(RINGIO_DRIVER_NAME, O_SYNC | O_RDWR);
         if (RingIODrv_handle < 0) {
             perror(RINGIO_DRIVER_NAME);
 

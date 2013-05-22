@@ -1,7 +1,7 @@
 /** 
  *  @file   _MultiProc.h
  *
- *  @brief      header file for_MultiProc on HLOS side
+ *  @brief      header file for _MultiProc
  *
  *
  */
@@ -63,7 +63,6 @@ extern "C" {
  * =============================================================================
  */
 /*!
- *  @def    MULTIPROC_MODULEID
  *  @brief  Unique module ID.
  */
 #define MultiProc_MODULEID      (UInt16) 0xB522
@@ -100,14 +99,14 @@ typedef struct MultiProc_Config_tag {
  *  @brief      Get the default configuration for the MultiProc module.
  *
  *              This function can be called by the application to get their
- *              configuration parameter to MultiProc_setup filled in by the
+ *              configuration parameter to MultiProc_setup() filled in by the
  *              MultiProc module with the default parameters.
  *
  *  @param      cfg        Pointer to the MultiProc module configuration
  *                         structure in which the default config is to be
  *                         returned.
  *
- *  @sa         MultiProc_setup
+ *  @sa         MultiProc_setup()
  */
 Void MultiProc_getConfig (MultiProc_Config * cfg);
 
@@ -119,13 +118,13 @@ Void MultiProc_getConfig (MultiProc_Config * cfg);
  *              invoked.
  *              Module-level configuration needs to be provided to this
  *              function. If the user wishes to change some specific config
- *              parameters, then MultiProc_getConfig can be called to get the
+ *              parameters, then MultiProc_getConfig() can be called to get the
  *              configuration filled with the default values. After this, only
  *              the required configuration values can be changed.
  *
  *  @param      cfg   MultiProc module configuration.
  *
- *  @sa         MultiProc_destroy
+ *  @sa         MultiProc_destroy()
  */
 Int MultiProc_setup (MultiProc_Config * cfg);
 
@@ -133,10 +132,10 @@ Int MultiProc_setup (MultiProc_Config * cfg);
  *  @brief      Destroy the MultiProc module.
  *
  *              Once this function is called, other MultiProc module APIs,
- *              except for the MultiProc_getConfig API cannot be called
+ *              except for the MultiProc_getConfig() API cannot be called
  *              anymore.
  *
- *  @sa         MultiProc_setup
+ *  @sa         MultiProc_setup()
  */
 Int MultiProc_destroy (Void);
 

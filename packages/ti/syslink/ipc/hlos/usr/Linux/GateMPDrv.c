@@ -53,6 +53,7 @@
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/utils/Gate.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/ipc/GateMP.h>
@@ -111,7 +112,7 @@ GateMPDrv_open (Void)
 
     if (GateMPDrv_refCount == 0) {
 
-        GateMPDrv_handle = open (GATEMP_DRIVER_NAME,
+        GateMPDrv_handle = Dev_pollOpen (GATEMP_DRIVER_NAME,
                                  O_SYNC | O_RDWR);
         if (GateMPDrv_handle < 0) {
             perror (GATEMP_DRIVER_NAME);

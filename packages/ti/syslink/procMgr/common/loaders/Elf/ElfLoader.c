@@ -117,11 +117,6 @@
 #include "dlw_dsbt.h"
 
 
-#if defined (__cplusplus)
-extern "C" {
-#endif
-
-
 /* =============================================================================
  *  Macros and types
  * =============================================================================
@@ -261,16 +256,17 @@ ElfLoaderFile_tell (Ptr clientHandle, Ptr fileDesc)
  *
  *  @sa     ElfLoaderMem_seek
  */
-inline
-UInt32
-ElfLoaderFile_read (Ptr    clientHandle,
-                    Ptr    fileDesc,
-                    Char * buffer,
-                    UInt32 size,
-                    UInt32 count)
+inline UInt32 ElfLoaderFile_read(Ptr clientHandle, Ptr fileDesc, Char *buffer,
+        UInt32 size, UInt32 count)
 {
+    UInt32 bytesRead;
+    Int status;
+    UInt32 retval;
+
     GT_5trace (curTrace, GT_ENTER, "ElfLoaderFile_read",
                clientHandle, fileDesc, buffer, size, count);
+
+//    printk("ElfLoaderFile_read: size 0x%x, count 0x%x\n", size, count);
 
     (Void) clientHandle; /* Not used. */
     GT_assert (curTrace, (fileDesc != NULL));
@@ -278,10 +274,13 @@ ElfLoaderFile_read (Ptr    clientHandle,
     GT_assert (curTrace, (size != 0));
     GT_assert (curTrace, (count != 0));
 
-    GT_0trace (curTrace, GT_LEAVE, "ElfLoaderFile_read");
+    status = OsalKfile_read(fileDesc, buffer, size, count, &bytesRead);
 
-    /*! @retval Value: Number of bytes read */
-    return (OsalKfile_read (fileDesc, buffer, size, count));
+    retval = (status == OSALKFILE_SUCCESS) ? bytesRead : 0;
+
+    GT_1trace (curTrace, GT_LEAVE, "ElfLoaderFile_read: 0x%x", retval);
+
+    return (retval);
 }
 
 /*!
@@ -2303,7 +2302,7 @@ Int ElfLoader_getSectionInfo (Loader_Handle         handle,
        GT_assert (curTrace, (elfLoaderObj != NULL));
        _elfLoaderObj = elfLoaderObj->elfLoaderObject;
        GT_assert (curTrace, (_elfLoaderObj != NULL));
- 
+
        DSBT_masterIndex = handle->procId;
        /* Query for these symbols, retrieving virt and phys addresses: */
        bRetVal1 = DLOAD_query_symbol(_elfLoaderObj->dloadHandle, fileId,
@@ -2525,7 +2524,3 @@ Int ElfLoader_getSectionData (Loader_Handle        handle,
 #if defined(SYSLINK_BUILDOS_LINUX)
 EXPORT_SYMBOL(ElfLoader_getSectionData);  // For debugging in Linux Kernel
 #endif /*#if defined(SYSLINK_BUILD_HLOS) */
-
-#if defined (__cplusplus)
-}
-#endif /* defined (__cplusplus) */

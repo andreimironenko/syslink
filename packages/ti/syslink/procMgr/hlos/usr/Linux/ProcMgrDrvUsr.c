@@ -61,6 +61,7 @@
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/utils/Memory.h>
+#include <ti/syslink/utils/Dev.h>
 #include <ti/syslink/inc/usr/ProcMgrDrvUsr.h>
 
 /* Module headers */
@@ -113,7 +114,7 @@ ProcMgrDrvUsr_open (Void)
         /* TBD: Protection for refCount. */
         ProcMgrDrvUsr_refCount++;
 
-        ProcMgrDrvUsr_handle = open (ProcMgr_DRIVER_NAME, O_SYNC | O_RDWR);
+        ProcMgrDrvUsr_handle = Dev_pollOpen (ProcMgr_DRIVER_NAME, O_SYNC | O_RDWR);
         if (ProcMgrDrvUsr_handle < 0) {
             perror ("ProcMgr driver open: " ProcMgr_DRIVER_NAME);
             /*! @retval ProcMgr_E_OSFAILURE Failed to open ProcMgr driver with

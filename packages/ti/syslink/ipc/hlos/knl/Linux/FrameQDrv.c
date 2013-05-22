@@ -1216,9 +1216,9 @@ long FrameQ_drvioctl (struct file *  filp,
             else {
 #endif /* !defined(SYSLINK_BUILD_OPTIMIZE) */
                 memreq = FrameQ_ShMem_sharedMemReq(&params);
-                ret = copy_to_user (&cargs.args.sharedMemReq.bytes,
-                                    &memreq,
-                                    sizeof (UInt32));
+                /* cargs gets copied to user space below */
+                cargs.args.sharedMemReq.bytes = memreq;
+
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
             }
 #endif /* !defined(SYSLINK_BUILD_OPTIMIZE) */

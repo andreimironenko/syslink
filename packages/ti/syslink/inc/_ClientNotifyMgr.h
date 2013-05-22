@@ -76,40 +76,34 @@ extern "C" {
  */
 
 /*!
- *  @def    CLIENTNOTIFYMGR_CREATED
  *  @brief  Constant value to indicate that ClientNotifyMgr instance is created.
  */
 #define CLIENTNOTIFYMGR_CREATED            (0x05251995)
 
 /*!
- *  @def    CLIENTNOTIFYMGR_VERSION
  *  @brief  Version of ClientNotifyMgr Module.
  */
 #define CLIENTNOTIFYMGR_VERSION            (1u)
 
 /*!
- *  @def    CLIENTNOTIFYMGR_STATIC_CREATE
  *  @brief  One of the CLIENTNOTIFYMGR instance create types.
  *          It indicates ClientNotifyMgr instance is created statically.
  */
 #define CLIENTNOTIFYMGR_STATIC_CREATE      (1u)
 
 /*!
- *  @def    CLIENTNOTIFYMGR_DYNAMIC_CREATE
  *  @brief  One of the ClientNotifyMgr instance create types.
  *          It indicates ClientNotifyMgr instance is created dynamically.
  */
 #define CLIENTNOTIFYMGR_DYNAMIC_CREATE     (2u)
 
 /*!
- *  @def    CLIENTNOTIFYMGR_STATIC_OPEN
  *  @brief  One of the ClientNotifyMgr instance open types.
  *          It indicates ClientNotifyMgr instance is opened statically.
  */
 #define CLIENTNOTIFYMGR_STATIC_OPEN        (4u)
 
 /*!
- *  @def    CLIENTNOTIFYMGR_DYNAMIC_OPEN
  *  @brief  One of the ClientNotifyMgr instance open types.
  *          It indicates CLIENTNOTIFYMGR instance is opened dynamically.
  */
@@ -145,7 +139,6 @@ extern "C" {
                              * ClientNotifyMgr_CACHE_LINESIZE)                 \
 
 /*!
- *  @def    CLIENTNOTIFYMGR_NotifyParamInfo_STRUCT_PADDING
  *  @brief  Padding  for  NotifyParamInfo struct.
  */
 #define CLIENTNOTIFYMGR_NotifyParamInfo_STRUCT_PADDING                         \
@@ -154,8 +147,7 @@ extern "C" {
                     /2)
 
 /*!
- *  @def    CLIENTNOTIFYMGR_ATTRS_STRUCT_PADDING
- *  @brief  adding required for the Attrs attribute  structure.
+ *  @brief  Padding required for the Attrs attribute structure.
  */
 #define  CLIENTNOTIFYMGR_Attrs_STRUCT_PADDING                         \
                   (  (   ClientNotifyMgr_CACHE_LINESIZE               \
@@ -163,9 +155,9 @@ extern "C" {
                     / 2)
 
 /*!
- *  @brief  Notification paramter info  strcutre. For Each registered client
- *          ClientNotifyMgr instance maintains an object of this structure type in
- *          the shared memory.
+ *  @brief  Notification paramter info structure. For each registered client
+ *          ClientNotifyMgr instance maintains an object of this structure type
+ *          in shared memory.
  */
 typedef struct ClientNotifyMgr_NotifyParamInfo_Tag {
     volatile UInt32 clientHandle;
@@ -188,19 +180,19 @@ typedef struct ClientNotifyMgr_NotifyParamInfo_Tag {
     volatile UInt16 notifyType;
     /*!< Notification type */
     volatile UInt16 isValid;
-   /*!< Indicated whether this  notification entry is valid or not*/
+   /*!< Indicated whether this notification entry is valid or not*/
     volatile UInt8  waitOnMultiNotifyFlags;
     /*!< Indicates Client is waiting for notification only when multiple sub
      * notify events are set
      */
     volatile UInt8  notifyFlag[CLIENTNOTIFYMGR_MAX_SUB_NOTIFYENTRIES];
     /*!< Flag indicates whether notification needs to be send or not.
-     *   If TRUE notification will be sent to client.No notification will
+     *   If TRUE notification will be sent to client. No notification will
      *   be sent if it false.  one entry for each sub notify entry.
      */
     volatile UInt8  eventCount[CLIENTNOTIFYMGR_MAX_SUB_NOTIFYENTRIES];
     /*!< Flag indicates whether callback function is to be called  in
-     *   ClientNotifyMgr_callback fxn.If non-zero Callback function will be
+     *   ClientNotifyMgr_callback fxn. If non-zero Callback function will be
      *   called one entry for each sub notify entry.
      */
     volatile UInt8  forceNotify;
@@ -232,13 +224,13 @@ typedef struct ClientNotifyMgr_Attrs_Tag {
      *   of the instannce. Enables client of the instance to use same notify
      *   info( such as water mark) to check different conditions in the other
      *   clients. This allows FrameQBufMgr to use same call back function to
-     *   handle  notifications  for individual FramePools separately by having
+     *   handle notifications for individual FramePools separately by having
      *   registered with clientNotifyMgr once and Passing subNotifyEntryId
-     *   ( equalvalentto FramePoolNo) as additional arg to enable/disable/
+     *   (equivalent to FramePoolNo) as additional arg to enable/disable/
      *   sendNotification multi functions.
      */
     volatile UInt32   numActClients;
-    /*!< Number of Clients currently using this instance*/
+    /*!< Number of clients currently using this instance */
     volatile UInt16   entryId;
     /*!< Id of the instance. MSB byte contains the creator procId and LSB
      * contains the instance no  on the creator processor.On each processor we
@@ -256,17 +248,17 @@ typedef struct ClientNotifyMgr_eventListenerInfo_tag
     /*!< Call back function.Gets called when there is a notification*/
     UInt32                  notifyId;
     /*!< Notify registratin id of the client. This is actually an index to
-     *   notifyparaminfo list where this clients  other notification info is
+     *   notifyparaminfo list where this clients other notification info is
      *   available.
      */
     Ptr cbContext;
-    /*!< Context pointer  paseed to call back function*/
+    /*!< Context pointer paseed to call back function*/
 }ClientNotifyMgr_eventListenerInfo;
 
 
 typedef struct ClientNotifyMgr_callbackCtx_tag {
     GateMP_Handle                    gate;
-    /*!< Gate handle for protection.Same gate that is provided to
+    /*!< Gate handle for protection. Same gate that is provided to
      * instance create/open call.
      */
     volatile ClientNotifyMgr_Attrs  *attrs;
@@ -275,7 +267,7 @@ typedef struct ClientNotifyMgr_callbackCtx_tag {
     /* Instance notify entries base address */
     UInt32                        minAlign;
     Bool                           cacheEnabled;
-    /*!<  Flag indicating whether Cache coherence API needs to be called for
+    /*!<  Flag indicating whether cache coherence API needs to be called for
      *    instance control structures
      */
     UInt32                          instId;

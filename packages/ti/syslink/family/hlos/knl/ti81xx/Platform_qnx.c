@@ -140,6 +140,9 @@
 #define EXPORT_SYMBOL(s)
 #endif
 
+/* ProcMgr friend function */
+extern ProcMgr_Handle _ProcMgr_getHandle(UInt16 procId);
+
 
 /** ============================================================================
  *  Macros.
@@ -153,11 +156,17 @@
  */
 #define SLAVE_CONFIG_TAG            0xDADA0000
 
-/* Defines used for timeout value for Ipc_detach/stop calls */
-#define TIMEOUT_LOOPCNT             1000
-#define TIMEOUT_SLEEPTIME           10
-#define ATTACH_LOOPCNT              5000000
-#define ATTACH_SLEEPTIME            1
+/* Defines used for timeout value for start/stopCallback. Note that
+ * the loop iterates LOOPCNT times but sleeps for SLEEPTIME only once
+ * every 4096 iterations. Increase the DETACH_LOOPCNT if the remote
+ * processor needs more time to shutdown.
+ */
+#define ATTACH_LOOPCNT          0x1388000   /* total sleep time = 5 sec */
+#define ATTACH_SLEEPTIME        1           /* msec */
+#define DETACH_LOOPCNT          0x2BC000    /* total sleep time = 0.7 sec */
+#define DETACH_SLEEPTIME        1           /* msec */
+#define CFG_LOOPCNT             40          /* total sleep time = 0.4 sec */
+#define CFG_SLEEPTIME           10          /* msec */
 
 /** ============================================================================
  *  Application specific configuration, please change these value according to
@@ -342,7 +351,8 @@ typedef struct Platform_Object {
     /*!< Slave embedded config */
     Platform_SlaveSRConfig *      slaveSRCfg;
     /*!< Shared region details from slave */
-
+    UInt16                        refCount;
+    /*!< Reference count for whether to wait for slave-side Ipc_stop */
     UInt8               *bslaveAdditionalReg;
     /*!< To keep track of  additional shared regions configured in the slave */
 } Platform_Object, *Platform_Handle;
@@ -428,7 +438,6 @@ static Platform_Object Platform_objects [MULTIPROC_MAXPROCESSORS];
 #endif
 static Platform_Module_State Platform_Module_state;
 static Platform_Module_State * Platform_module = &Platform_Module_state;
-static UInt16 Platform_refCount = 0;
 
 
 Int32 _Platform_setup  (void);
@@ -2694,7 +2703,7 @@ Int32 Platform_loadCallback(UInt16 procId, Ptr arg)
     }
 
     /* increase refCount for number of successful loadCallbacks */
-    Platform_refCount++; /* TODO: must be per core */
+    handle->refCount++;
 
 leave:
     /* if error, release resources in reverse order of acquisition */
@@ -2766,16 +2775,16 @@ Platform_startCallback (UInt16 procId, Ptr arg)
     /* Get shared region max numEntries from Slave */
     do {
         if (startTimeout > 0) {
-            OsalThread_sleep(TIMEOUT_SLEEPTIME);
+            OsalThread_sleep(CFG_SLEEPTIME);
         }
 
         status = Ipc_readConfig(procId, SLAVE_CONFIG_TAG,
                 (Ptr)&slaveModuleConfig, sizeof(Syslink_SlaveModuleConfig));
 
-    } while ((status == Ipc_E_FAIL) && (++startTimeout < TIMEOUT_LOOPCNT));
+    } while ((status == Ipc_E_FAIL) && (++startTimeout < CFG_LOOPCNT));
 
     /* Check timeout value */
-    if (startTimeout >= TIMEOUT_LOOPCNT) {
+    if (startTimeout >= CFG_LOOPCNT) {
         status = Platform_E_FAIL;
         GT_setFailureReason(curTrace, GT_4CLASS, "Platform_startCallback",
             status, "Ipc_readConfig timeout");
@@ -2855,8 +2864,7 @@ Int32 Platform_stopCallback(UInt16 procId, Ptr arg)
     UnmapInfo *             uiAry = NULL;
     ProcMgr_State           procState;
 
-    GT_2trace(curTrace, GT_ENTER,
-        "Platform_stopCallback: procId=%d, arg=0x%08x", procId, arg);
+    GT_2trace(curTrace, GT_ENTER, "Platform_stopCallback", procId, arg);
 
     handle = (Platform_Handle)&Platform_objects[procId];
 
@@ -2948,15 +2956,15 @@ Int32 Platform_stopCallback(UInt16 procId, Ptr arg)
     detachTimeout = 0;
 
     do {
-        if (detachTimeout > 0) {
-            OsalThread_sleep(TIMEOUT_SLEEPTIME);
-        }
-
+        detachTimeout++;
         status = Ipc_detach(procId);
 
-    } while ((status < 0) && (++detachTimeout < TIMEOUT_LOOPCNT));
+        if ((status < 0) && ((detachTimeout & 0xFFF) == 0)) {
+            OsalThread_sleep(DETACH_SLEEPTIME);
+        }
+    } while ((status < 0) && (detachTimeout < DETACH_LOOPCNT));
 
-    if (detachTimeout >= TIMEOUT_LOOPCNT) {
+    if (detachTimeout >= DETACH_LOOPCNT) {
         GT_setFailureReason(curTrace, GT_4CLASS, "Platform_stopCallback",
             status, "Ipc_detach timeout");
         /* don't exit, keep going */
@@ -2965,26 +2973,26 @@ Int32 Platform_stopCallback(UInt16 procId, Ptr arg)
     /* wait for remote processor if it is running */
     procState = ProcMgr_getState(handle->pmHandle);
 
-    if ((Platform_refCount == 1) && (procState == ProcMgr_State_Running)) {
+    if ((handle->refCount == 1) && (procState == ProcMgr_State_Running)) {
 
         /* check for IPC stop on slave until successful or times out */
         detachTimeout = 0;
 
         do {
             if (detachTimeout > 0) {
-                OsalThread_sleep(TIMEOUT_SLEEPTIME);
+                OsalThread_sleep(CFG_SLEEPTIME);
             }
 
             /* read sr0MemorySetup */
             numBytes = sizeof(Platform_SlaveConfig);
 
             status = _Platform_readSlaveMemory(procId, start,
-                &handle->slaveCfg, &numBytes);
+                    &handle->slaveCfg, &numBytes);
 
         } while ((handle->slaveCfg.sr0MemorySetup == 1)
-                  && (++detachTimeout < TIMEOUT_LOOPCNT));
+                  && (++detachTimeout < CFG_LOOPCNT));
 
-        if (detachTimeout >= TIMEOUT_LOOPCNT) {
+        if (detachTimeout >= CFG_LOOPCNT) {
             status = Platform_E_FAIL;
             GT_setFailureReason(curTrace, GT_4CLASS, "Platform_stopCallback",
                 status, "Ipc_stop timeout - Ipc_stop not called by slave?");
@@ -3029,7 +3037,7 @@ Int32 Platform_stopCallback(UInt16 procId, Ptr arg)
         }
     }
 
-    Platform_refCount--;
+    handle->refCount--;
 
 leave:
     /* release resources which are no longer needed */
@@ -3234,4 +3242,13 @@ Void Platform_terminateEventConfig(UInt16 procId, UInt32 *eventId,
 
     *eventId = Platform_module->termEvtAry[procId].eventId;
     *lineId = Platform_module->termEvtAry[procId].lineId;
+}
+
+Void Platform_terminateHandler(UInt16 procId)
+{
+    ProcMgr_Handle procHnd;
+
+    procHnd = _ProcMgr_getHandle(procId);
+    Platform_stopCallback(procId, NULL);
+    ProcMgr_stop(procHnd);
 }

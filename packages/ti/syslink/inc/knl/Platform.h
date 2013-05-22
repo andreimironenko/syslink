@@ -68,26 +68,39 @@ extern "C" {
  *  API
  *  ----------------------------------------------------------------------------
  */
-/*! 
+/*!
  *  @brief Function to setup the platform specific logic
  */
-Int32
-Platform_setup (void);
+Int32 Platform_setup(void);
 
-/*! 
+/*!
  *  @brief Function to destroy the platform specific logic
  */
-Int32
-Platform_destroy (void);
+Int32 Platform_destroy(void);
 
-/* Load callback function */
-Int Platform_loadCallback (UInt16, Ptr);
+/*!
+ *  @brief      Function called by ProcMgr when slave is in loaded state.
+ *
+ *  @param      procId  MultiProc processor Id
+ *  @param      arg     Registered argument.
+ */
+Int Platform_loadCallback(UInt16 procId, Ptr arg);
 
-/* Start callback function */
-Int Platform_startCallback (UInt16, Ptr);
+/*!
+ *  @brief      Internally called by ProcMgr when slave is in started state.
+ *
+ *  @param      procId  MultiProc processor Id
+ *  @param      arg     Registered argument.
+ */
+Int Platform_startCallback(UInt16 procId, Ptr arg);
 
-/* Stop callback function */
-Int Platform_stopCallback (UInt16, Ptr);
+/*!
+ *  @brief      Internally called by ProcMgr when slave is in stopped state.
+ *
+ *  @param      procId  MultiProc processor Id
+ *  @param      arg     Registered argument.
+ */
+Int Platform_stopCallback(UInt16 procId, Ptr arg);
 
 
 #if defined (__cplusplus)

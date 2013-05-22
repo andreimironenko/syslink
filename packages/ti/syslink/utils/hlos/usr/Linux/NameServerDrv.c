@@ -53,6 +53,7 @@
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/utils/Gate.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/ipc/NameServer.h>
@@ -97,59 +98,70 @@ static UInt32 NameServerDrv_refCount = 0;
  *  Functions
  *  ============================================================================
  */
+
 /*!
  *  @brief  Function to open the NameServer driver.
  *
  *  @sa     NameServerDrv_close
  */
-Int
-NameServerDrv_open (Void)
+Int NameServerDrv_open(Void)
 {
-    Int status      = NameServer_S_SUCCESS;
-    int osStatus    = 0;
+    Int status = NameServer_S_SUCCESS;
 
-    GT_0trace (curTrace, GT_ENTER, "NameServerDrv_open");
+    GT_0trace(curTrace, GT_ENTER, "NameServerDrv_open");
 
+    /* TBD: Protection for refCount. */
     if (NameServerDrv_refCount == 0) {
-        /* TBD: Protection for refCount. */
-        NameServerDrv_refCount++;
 
-        NameServerDrv_handle = open (NAMESERVER_DRVIER_NAME, O_SYNC | O_RDWR);
+        /* open the drive */
+        NameServerDrv_handle = Dev_pollOpen(NAMESERVER_DRVIER_NAME,
+                O_SYNC | O_RDWR);
+
         if (NameServerDrv_handle < 0) {
-            perror ("NameServer driver open: ");
-            /*! @retval NameServer_E_OSFAILURE Failed to open NameServer driver
-                                           with OS */
             status = NameServer_E_OSFAILURE;
-            GT_setFailureReason (curTrace,
-                                 GT_4CLASS,
-                                 "NameServerDrv_open",
-                                 status,
-                                 "Failed to open NameServer driver with OS!");
+            GT_setFailureReason(curTrace, GT_4CLASS, "NameServerDrv_open",
+                    status, "Failed to open NameServer driver with OS");
         }
-        else {
-            osStatus = fcntl (NameServerDrv_handle, F_SETFD, FD_CLOEXEC);
-            if (osStatus != 0) {
-                /*! @retval NameServer_E_OSFAILURE Failed to set file
-                                descriptor flags */
+
+        /* set flag to close file descriptor on exec */
+        if (status == NameServer_S_SUCCESS) {
+            status = fcntl(NameServerDrv_handle, F_SETFD, FD_CLOEXEC);
+
+            if (status != 0) {
                 status = NameServer_E_OSFAILURE;
-                GT_setFailureReason (curTrace,
-                                     GT_4CLASS,
-                                     "NameServerDrv_open",
-                                     status,
-                                     "Failed to set file descriptor flags!");
+                GT_setFailureReason(curTrace, GT_4CLASS, "NameServerDrv_open",
+                        status, "Failed to set file descriptor flags");
+            }
+        }
+
+        /* set pid on file descriptor for resource tracking */
+        if (status == NameServer_S_SUCCESS) {
+            status = fcntl(NameServerDrv_handle, F_SETOWN, getpid());
+
+            if (status != 0) {
+                status = NameServer_E_OSFAILURE;
+                GT_setFailureReason(curTrace, GT_4CLASS, "NameServerDrv_open",
+                    status, "Failed to set process id");
             }
         }
     }
-    else {
+
+    if (status == NameServer_S_SUCCESS) {
         NameServerDrv_refCount++;
     }
 
-    GT_1trace (curTrace, GT_LEAVE, "NameServerDrv_open", status);
+    /* failure case */
+    if (status < 0) {
+        if (NameServerDrv_handle > 0) {
+            close(NameServerDrv_handle);
+            NameServerDrv_handle = 0;
+        }
+    }
 
-/*! @retval NameServer_S_SUCCESS Operation successfully completed. */
-    return status;
+    GT_1trace(curTrace, GT_LEAVE, "NameServerDrv_open", status);
+
+    return(status);
 }
-
 
 /*!
  *  @brief  Function to close the NameServer driver.

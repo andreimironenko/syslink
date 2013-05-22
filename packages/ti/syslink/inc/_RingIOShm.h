@@ -71,27 +71,21 @@ extern "C" {
  * =============================================================================
  */
 /*!
- *  @def    RingIOShm_GLOBAL
- *
  *  @brief  Name of memory that contains the RingIOShm global structure
  */
 #define RingIOShm_GLOBAL "RingIOShm.global"
 
 /*!
- *  @def    RingIOShm_CONFIG
- *
  *  @brief  Name of memory that contains the RingIOShm configuration structure
  */
 #define RingIOShm_CONFIG "RingIOShm.cfg"
 
 /*!
- *  @def    RingIOShm_CREATED
  *  @brief  Created stamp for RingIOShm instance
  */
 #define RingIOShm_CREATED 0x05251995
 
 /*!
- *  @def    VERSION
  *  @brief  Version information for RingIOShm instance
  */
 #define RingIOShm_VERSION         1
@@ -108,43 +102,31 @@ extern "C" {
 #define RingIOShm_invalidAttr 0xFFFF
 
 /*!
- *  @def  RingIOShm_IS_WRITER
- *
  *  @brief   Check if object is a writer.
  */
 #define RingIOShm_IS_WRITER(object)             ((object)->openMode == (UInt32)RingIO_MODE_WRITER)
 
 /*!
- *  @def  RingIOShm_IS_READER
- *
  *  @brief   Check if object is a reader.
  */
 #define RingIOShm_IS_READER(object)             ((object)->openMode == (UInt32)RingIO_MODE_READER)
 
 /*!
- *  @def  GET_CUR_ATTR_END
- *
  *  @brief   Get Current attr buffer end.
  */
 #define RingIOShm_GET_CUR_ATTR_END(object)      (object->control->curAttrBufEnd + 1)
 
 /*!
- *  @def  GET_CUR_DATA_END
- *
  *  @brief   Get Current data buffer end.
  */
 #define RingIOShm_GET_CUR_DATA_END(object)      (object->control->curBufEnd + 1)
 
 /*!
- *  @def  ADJUST_MODULO
- *
  *  @brief   Modulo operation
  */
 #define RingIOShm_ADJUST_MODULO(start, size, bufSize)   (((start) + (size)) % bufSize)
 
 /*!
- *  @def  SIZEOF_ATTR
- *
  *  @brief   Size of RingIO attributes
  */
 #define RingIOShm_SIZEOF_ATTR(size)                     (sizeof (RingIOShm_Attr) + (size))
@@ -188,8 +170,6 @@ typedef struct RingIOShm_ProcAttrs_tag {
 } RingIOShm_ProcAttrs;
 
 /*!
- *  @def    RingIOShm_Client
- *
  *  @brief  This structure defines the RingIO Shared memory client structure.
  *          The RingIO Reader or Writer state information is stored in this
  *          structure
@@ -248,8 +228,6 @@ typedef struct RingIOShm_Client_tag {
 } RingIOShm_Client;
 
 /*!
- *  @def     RingIOShm_ControlStruct
- *
  *  @brief   This structure defines the RingIO Control Structure. This structure
  *           is stored in shared memory and is accessible by all clients. The
  *           control structure supports a single reader and a single writer for
@@ -310,15 +288,11 @@ typedef struct RingIOShm_ControlStruct_tag {
 } RingIOShm_ControlStruct;
 
 /*!
- *  @def     RingIOShm_ControlHandle
- *
  *  @brief   This type is used for the handle to the Shared Control structure.
  */
 typedef RingIOShm_ControlStruct * RingIOShm_ControlHandle;
 
 /*!
- *  @def     RingIOShm_ClientHandle
- *
  *  @brief   This type is used for the handle to the Shared Client structure.
  */
 typedef RingIOShm_Client       * RingIOShm_ClientHandle;

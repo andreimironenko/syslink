@@ -4,8 +4,7 @@
  *  @brief      Qnx thread interface definitions.
  *
  *              This interface abstracts the kernel side thread
- *              implementation. It will be realised using the kthread
- *              constructs present in Linux.
+ *              implementation.
  *
  *
  *  ============================================================================
@@ -120,62 +119,47 @@ OsalThread_ModuleObject OsalThread_state;
 static void * Thread_callback(Ptr arg);
 
 
-/*!
- *  @brief      Initialize the thread module.
- *
- *  @sa         OsalThread_destroy
+/*
+ * ======== OsalThread_setup ========
  */
-Int32
-OsalThread_setup (Void)
+Int32 OsalThread_setup(Void)
 {
     Int32 status = 0;
-    List_Params  listparams;
+    List_Params listparams;
 
-    GT_0trace (curTrace, GT_ENTER, "OsalThread_setup");
+    GT_0trace(curTrace, GT_ENTER, "OsalThread_setup");
 
     /* Construct the list object */
-    List_Params_init (&listparams);
-    List_construct (&OsalThread_state.objList, &listparams);
+    List_Params_init(&listparams);
+    List_construct(&OsalThread_state.objList, &listparams);
 
     /* Initialize the count */
-    Atomic_set (&OsalThread_state.count, 0);
+    Atomic_set(&OsalThread_state.count, 0);
 
-    GT_0trace (curTrace, GT_LEAVE, "OsalThread_setup");
+    GT_0trace(curTrace, GT_LEAVE, "OsalThread_setup");
 
-    /*! @retval 0 operation successful */
-    return status;
+    return (status);
 }
 
 
-/*!
- *  @brief      Finalize the thread module.
- *
- *  @sa         OsalThread_setup
+/*
+ * ======== OsalThread_destroy ========
  */
-Int32
-OsalThread_destroy (Void)
+Int32 OsalThread_destroy (Void)
 {
     Int32 status = 0;
 
-    GT_0trace (curTrace, GT_ENTER, "OsalThread_destroy");
+    GT_0trace(curTrace, GT_ENTER, "OsalThread_destroy");
 
-    List_destruct (&OsalThread_state.objList);
+    List_destruct(&OsalThread_state.objList);
 
-    GT_0trace (curTrace, GT_LEAVE, "OsalThread_destroy");
+    GT_0trace(curTrace, GT_LEAVE, "OsalThread_destroy");
 
-    /*! @retval 0 operation successful */
-    return status;
+    return (status);
 }
 
 /*
  *  ======== OsalThread_create ========
- */
-/*!
- *  @brief      create the thread.
- *
- *  @param      fxn Function which will be executed after the thread creation.
- *  @param      fxnArgs data which the function requires.
- *  @sa         OsalThread_delete, Thread_callback
  */
 OsalThread_Handle OsalThread_create(
     OsalThread_CallbackFxn  fxn,
@@ -349,12 +333,6 @@ OsalThread_Handle OsalThread_create(
 /*
  *  ======== OsalThread_delete ========
  */
-/*!
- *  @brief      Destroys the thread.
- *
- *  @param      threadHandle which needs to be destroyed.
- *  @sa            OsalThread_create
- */
 Int32 OsalThread_delete(OsalThread_Handle *threadHandle)
 {
     Int32               status = OSALTHREAD_SUCCESS;
@@ -428,14 +406,10 @@ Int32 OsalThread_delete(OsalThread_Handle *threadHandle)
     return(status);
 }
 
-/*!
- *  @brief      Disables the thread.
- *
- *  @param      threadHandle which needs to be disabled.
- *  @sa            OsalThread_enableThread
+/*
+ * ======== OsalThread_disableThread ========
  */
-Void
-OsalThread_disableThread (OsalThread_Handle threadHandle)
+Void OsalThread_disableThread(OsalThread_Handle threadHandle)
 {
     OsalThread_Object * obj = (OsalThread_Object*) threadHandle;
 
@@ -461,14 +435,10 @@ OsalThread_disableThread (OsalThread_Handle threadHandle)
     GT_0trace (curTrace, GT_LEAVE, "OsalThread_disableThread");
 }
 
-/*!
- *  @brief      Enables the thread.
- *
- *  @param      threadHandle which needs to be disabled.
- *  @sa            OsalThread_disableThread
+/*
+ * ======== OsalThread_enableThread ========
  */
-Void
-OsalThread_enableThread (OsalThread_Handle threadHandle)
+Void OsalThread_enableThread(OsalThread_Handle threadHandle)
 {
     OsalThread_Object * obj = (OsalThread_Object*) threadHandle;
 
@@ -498,13 +468,10 @@ OsalThread_enableThread (OsalThread_Handle threadHandle)
     GT_0trace (curTrace, GT_LEAVE, "OsalThread_enableThread");
 }
 
-/*!
- *  @brief      Disables all threads created using this module.
- *
- *  @sa            OsalThread_enable
+/*
+ * ======== OsalThread_disable ========
  */
-Void
-OsalThread_disable (Void)
+Void OsalThread_disable(Void)
 {
     List_Elem * obj ;
 
@@ -517,13 +484,10 @@ OsalThread_disable (Void)
     GT_0trace (curTrace, GT_LEAVE, "OsalThread_disable");
 }
 
-/*!
- *  @brief      Enables all threads created using this module.
- *
- *  @sa           OsalThread_disable
+/*
+ * ======== OsalThread_enable ========
  */
-Void
-OsalThread_enable (Void)
+Void OsalThread_enable(Void)
 {
     List_Elem * obj ;
 
@@ -540,14 +504,10 @@ OsalThread_enable (Void)
     GT_0trace (curTrace, GT_LEAVE, "OsalThread_enable");
 }
 
-/*!
- *  @brief      Activate this thread. This function may gets invoked from ISR context.
- *
- * @param     threadHandle the thread which needs to be activated
- *  @sa          OsalThread_yield
+/*
+ * ======== OsalThread_activate ========
  */
-Void
-OsalThread_activate (OsalThread_Handle threadHandle)
+Void OsalThread_activate(OsalThread_Handle threadHandle)
 {
     OsalThread_Object * obj = (OsalThread_Object*) threadHandle;
     Int                 ret = 0;
@@ -585,14 +545,12 @@ OsalThread_activate (OsalThread_Handle threadHandle)
     GT_0trace (curTrace, GT_LEAVE, "OsalThread_activate");
 }
 
-/*!
- *  @brief   This function may get invoked from ISR context
+/*
+ * ======== OsalThread_yield ========
  *
- *  @param     arg ThreadHandle
- *  @sa      OsalThread_activate
+  * This function may get invoked from ISR context
  */
-Void
-OsalThread_yield (OsalThread_Handle threadHandle)
+Void OsalThread_yield(OsalThread_Handle threadHandle)
 {
     OsalThread_Object * obj = (OsalThread_Object*) threadHandle;
 
@@ -619,66 +577,50 @@ OsalThread_yield (OsalThread_Handle threadHandle)
     GT_0trace (curTrace, GT_LEAVE, "OsalThread_yield");
 }
 
-/*!
- *  @brief   Sleep this thread for specific time in milli-seconds.
- *
- *  @param   arg ThreadHandle
- *  @sa      OsalThread_delay
+/*
+ * ======== OsalThread_sleep ========
  */
-Void
-OsalThread_sleep (UInt32 time)
+Void OsalThread_sleep(UInt32 time)
 {
-
     GT_0trace (curTrace, GT_ENTER, "OsalThread_sleep");
-
-    delay (time);
-
+    delay(time);
     GT_0trace (curTrace, GT_LEAVE, "OsalThread_sleep");
 }
 
 
-/*!
- *  @brief   Delay this thread for specific time in milli-seconds. Does not schedule out
- *               this thread.
- *
- *  @param     arg ThreadHandle
- *  @sa      OsalThread_delay
+/*
+ * ======== OsalThread_delay ========
  */
 Void
 OsalThread_delay (UInt32 time)
 {
-    GT_0trace (curTrace, GT_ENTER, "OsalThread_delay");
-    delay (time);
-    GT_0trace (curTrace, GT_LEAVE, "OsalThread_delay");
+    GT_0trace(curTrace, GT_ENTER, "OsalThread_delay");
+    delay(time);
+    GT_0trace(curTrace, GT_LEAVE, "OsalThread_delay");
 }
 
 
-/*!
- *  @brief   Checks if current context is a thread context or ISR context.
+/*
+ * ======== OsalThread_inThread ========
  */
-Bool
-OsalThread_inThread (Void)
+Bool OsalThread_inThread(Void)
 {
     Bool inThread = FALSE;
 
     GT_0trace(curTrace, GT_ENTER, "OsalThread_inThread");
 
-		// always false for QNX
-    inThread = FALSE;
+    /* always false for QNX */
 
     GT_1trace (curTrace, GT_LEAVE, "OsalThread_inThread", inThread);
 
-    return inThread;
+    return (inThread);
 }
 
 
-/*!
- *  @brief   Wait for thread completion.
- *
- *  @param   arg ThreadHandle
+/*
+ * ======== OsalThread_waitForThread ========
  */
-Void
-OsalThread_waitForThread (OsalThread_Handle threadHandle)
+Void OsalThread_waitForThread (OsalThread_Handle threadHandle)
 {
     OsalThread_Object * obj = (OsalThread_Object*) threadHandle;
 
@@ -707,11 +649,8 @@ OsalThread_waitForThread (OsalThread_Handle threadHandle)
 }
 
 
-/*!
- *  @brief   This function gets invoked by the OS when ISR triggers this
- *
- *  @param   arg ThreadHandle
- *  @sa      OsalThread_create
+/*
+ * ======== Thread_callback ========
  */
 void * Thread_callback(Void *arg)
 {

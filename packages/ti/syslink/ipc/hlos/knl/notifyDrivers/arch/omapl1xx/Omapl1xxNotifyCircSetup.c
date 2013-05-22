@@ -102,7 +102,7 @@ static UInt NotifyCircSetup_dspRecvIntId0 = NotifyCircSetup_DSP_INT0;
 static UInt NotifyCircSetup_armRecvIntId0 = NotifyCircSetup_ARM_INT0;
 
 /* Enable the second interrupt line */
-static Bool NotifyCircSetup_useSecondLine = TRUE;
+static Bool NotifyCircSetup_useSecondLine = FALSE;
 
 /*
  *  Incoming interrupt ID for line #1 line on DSP
@@ -154,7 +154,7 @@ static Notify_Handle NotifyCircSetup_notifyHandle1 = NULL;
 Int
 NotifyCircSetupOmapl1xx_attach (UInt16 procId, Ptr sharedAddr)
 {
-    Int32                   status   = Notify_S_SUCCESS;
+    Int32 status = Notify_S_SUCCESS;
     NotifyDriverCirc_Params notifyCircParams;
 
     GT_1trace (curTrace, GT_ENTER, "NotifyCircSetupOmapl1xx_attach", sharedAddr);

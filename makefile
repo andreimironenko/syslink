@@ -103,6 +103,8 @@ syslink-driver:
             SYSLINK_BUILD_DEBUG=$(SYSLINK_BUILD_DEBUG) \
             SYSLINK_BUILD_OPTIMIZE=$(SYSLINK_BUILD_OPTIMIZE) \
             SYSLINK_TRACE_ENABLE=$(SYSLINK_TRACE_ENABLE) \
+            SYSLINK_NOTIFYDRIVER=$(SYSLINK_NOTIFYDRIVER) \
+            SYSLINK_TRANSPORT=$(SYSLINK_TRANSPORT) \
             $@
 
 syslink-hlos:
@@ -271,24 +273,6 @@ else ifeq ("$(DEVICE)","OMAPL1XX")
             CGT_ARM_PREFIX=$(CGT_ARM_PREFIX) \
             CGT_C64P_ELF_INSTALL_DIR=$(CGT_C64P_ELF_INSTALL_DIR) \
             syslink-samples-hlos
-endif
-
-LOWER_GPPOS = $(shell echo $(GPPOS) | tr A-Z a-z)
-EXAMPLE_DEVICE = $(DEVICE)
-
-ifeq ("$(LOADER)","COFF")
-    EXAMPLE_LOADER = _coff
-else
-    EXAMPLE_LOADER = _elf
-endif
-
-ifeq ("$(SDK)","EZSDK")
-    EXAMPLE_SDK = _$(shell echo $(SDK) | tr A-Z a-z)
-else
-    EXAMPLE_SDK =
-endif
-ifeq ("$(DEVICE)","OMAPL1XX")
-    EXAMPLE_DEVICE = OMAPL138
 endif
 
 examples:
@@ -472,6 +456,19 @@ ifeq ($(REQUIRE_SYSLINK_BUILD_FLAGS), 1)
     else ifeq ("$(SYSLINK_TRACE_ENABLE)", "1")
     else
         $(error SYSLINK_TRACE_ENABLE is set to "$(SYSLINK_TRACE_ENABLE)", which is invalid. $(ERRMSG))
+    endif
+
+    ifeq ("$(SYSLINK_NOTIFYDRIVER)", "NOTIFYDRIVERSHM")
+    else ifeq ("$(SYSLINK_NOTIFYDRIVER)", "NOTIFYDRIVERCIRC")
+    else
+        $(error SYSLINK_NOTIFYDRIVER is set to "$(SYSLINK_NOTIFYDRIVER)", which is invalid. $(ERRMSG))
+    endif
+
+    ifeq ("$(SYSLINK_TRANSPORT)", "TRANSPORTSHM")
+    else ifeq ("$(SYSLINK_TRANSPORT)", "TRANSPORTSHMNOTIFY")
+    else ifeq ("$(SYSLINK_TRANSPORT)", "TRANSPORTSHMCIRC")
+    else
+        $(error SYSLINK_TRANSPORT is set to "$(SYSLINK_TRANSPORT)", which is invalid. $(ERRMSG))
     endif
 endif
 

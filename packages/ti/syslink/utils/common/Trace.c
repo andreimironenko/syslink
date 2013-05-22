@@ -61,10 +61,6 @@
 #include <ti/syslink/inc/TraceDrv.h>
 #include <ti/syslink/inc/TraceDrvDefs.h>
 
-#if defined (__cplusplus)
-extern "C" {
-#endif
-
 
 /*!
  *  @brief      Global trace flag.
@@ -73,12 +69,12 @@ Int curTrace = 0;
 
 
 /*!
- *  @brief      Function to log the trace with zero parameters and just
- *              information string.
- *  @param      mask type of traces.
- *  @param      classtype One of three classes in Syslink where this trace need
+ *  @brief      Log the trace with zero parameters and just information string.
+
+ *  @param      mask        type of traces.
+ *  @param      classtype   One of three classes in Syslink where this trace need
  *              to be enabed.
- *  @param      The debug string.
+ *  @param      infoString  The debug string.
  */
 Void
 _GT_0trace (UInt32 mask, GT_TraceClass classtype, Char * infoString)
@@ -109,7 +105,7 @@ _GT_0trace (UInt32 mask, GT_TraceClass classtype, Char * infoString)
  *  @param      mask type of traces
  *  @param      classtype One of three classes in Syslink where this trace
  *              need to be enabed.
- *  @param      The debug string.
+ *  @param      infoString The debug string.
  *  @param      param The additional parameter which needs to be logged.
  */
 Void
@@ -144,7 +140,7 @@ _GT_1trace (UInt32         mask,
  *  @param      mask type of traces
  *  @param      classtype One of three classes in Syslink where this trace
  *              need to be enabed.
- *  @param      The debug string.
+ *  @param      infoString The debug string.
  *  @param      param0 The first parameter which needs to be logged.
  *  @param      param1 The second parameter which needs to be logged.
  */
@@ -181,7 +177,7 @@ _GT_2trace (UInt32         mask,
  *  @param      mask type of traces
  *  @param      classtype One of three classes in Syslink where this trace
  *              need to be enabed.
- *  @param      The debug string.
+ *  @param      infoString The debug string.
  *  @param      param0 The first parameter which needs to be logged.
  *  @param      param1 The second parameter which needs to be logged.
  *  @param      param2 The third parameter which needs to be logged.
@@ -220,7 +216,7 @@ _GT_3trace (UInt32         mask,
  *  @param      mask type of traces
  *  @param      classtype One of three classes in Syslink where this trace
  *              need to be enabed.
- *  @param      The debug string.
+ *  @param      infoString The debug string.
  *  @param      param0 The first parameter which needs to be logged.
  *  @param      param1 The second parameter which needs to be logged.
  *  @param      param2 The third parameter which needs to be logged.
@@ -261,7 +257,7 @@ _GT_4trace (UInt32         mask,
  *  @param      mask type of traces
  *  @param      classtype One of three classes in Syslink where this trace
  *              need to be enabed.
- *  @param      The debug string.
+ *  @param      infoString The debug string.
  *  @param      param0 The first parameter which needs to be logged.
  *  @param      param1 The second parameter which needs to be logged.
  *  @param      param2 The third parameter which needs to be logged.
@@ -313,13 +309,13 @@ _GT_5trace (UInt32         mask,
  *  @param      mask type of traces
  *  @param      classtype One of three classes in Syslink where this trace
  *              need to be enabed.
- *  @param      The debug string.
+ *  @param      infoString The debug string.
  *  @param      param0 The first parameter which needs to be logged.
  *  @param      param1 The second parameter which needs to be logged.
  *  @param      param2 The third parameter which needs to be logged.
  *  @param      param3 The fourth parameter which needs to be logged.
  *  @param      param4 The fifth parameter which needs to be logged.
- *  @param      param5 The sixth parameter which needs to be logged. 
+ *  @param      param5 The sixth parameter which needs to be logged.
  */
 Void
 _GT_6trace (UInt32         mask,
@@ -415,9 +411,3 @@ UInt32 _GT_setTrace (UInt32 mask, GT_TraceType type)
     /*! @retval old-mask Operation successfully completed. */
     return cmdArgs.args.setTrace.oldMask;
 }
-
-
-#if defined (__cplusplus)
-}
-#endif /* defined (__cplusplus) */
-

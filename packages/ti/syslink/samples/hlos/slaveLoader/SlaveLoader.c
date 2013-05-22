@@ -449,6 +449,7 @@ Int SlaveLoader_mapByFile(ProcMgr_Handle handle, String mapFile, UInt16 procId,
     ProcMgr_ProcInfo *procInfo;
     UInt32 maxMemoryRegions;
     Int procInfoSize;
+    int  retval = 0;
     int j;
 
     f = fopen(mapFile, "r");
@@ -566,11 +567,12 @@ Int SlaveLoader_mapByFile(ProcMgr_Handle handle, String mapFile, UInt16 procId,
         fclose(f);
     }
     else {
-        Osal_printf("Unable to open %s... skipping...\n");
+        Osal_printf("Unable to open %s virt/phys memory file \n", mapFile);
+        retval = -1;
     }
 
     /* regardless, we return 'success'.  Malformed lines are skipped */
-    return (TRUE);
+    return (retval);
 }
 
 int isMapLine(char *line, UInt16 procId)

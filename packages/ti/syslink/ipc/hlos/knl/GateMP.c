@@ -109,8 +109,6 @@
 #define RESERVED        ((UInt8)-1)
 
 /*!
- *  @var    GateMP_nameServer
- *
  *  @brief  Name of the reserved NameServer used for GateMP.
  */
 #define GateMP_NAMESERVER  "GateMP"
@@ -558,18 +556,17 @@ static Void GateMP_getSharedParams(      GateMP_Params *  sparams,
 /*
  *  ======== GateMP_Params_init ========
  */
-Void
-GateMP_Params_init (GateMP_Params * params)
+Void GateMP_Params_init(GateMP_Params *params)
 {
-    GT_1trace (curTrace, GT_ENTER, "GateMP_Params_init", params);
+    GT_1trace(curTrace, GT_ENTER, "GateMP_Params_init", params);
     params->name = NULL;
     params->regionId = 0;
     params->sharedAddr = NULL;
     params->localProtect = GateMP_LocalProtect_INTERRUPT;
     params->remoteProtect = GateMP_RemoteProtect_SYSTEM;
-    GT_0trace (curTrace, GT_LEAVE, "GateMP_Params_init");
-}
 
+    GT_0trace(curTrace, GT_LEAVE, "GateMP_Params_init");
+}
 
 /*
  *  ======== GateMP_Instance_init ========
@@ -1182,10 +1179,10 @@ Int GateMP_openByAddr(Ptr sharedAddr, GateMP_Handle *handle)
         status = GateMP_E_FAIL;
     }
     else {
-        /* Local gate */
+        /* local gate */
         if (GETREMOTE(attrs->mask) == GateMP_RemoteProtect_NONE) {
             if (attrs->creatorProcId != MultiProc_self()) {
-                status = GateMP_E_LOCALGATE; /* TBD */
+                status = GateMP_E_LOCALGATE;
             }
             else {
                 key = Gate_enterSystem();
@@ -1196,7 +1193,7 @@ Int GateMP_openByAddr(Ptr sharedAddr, GateMP_Handle *handle)
             }
         }
         else {
-            /* Remote case */
+            /* remote case */
             switch (GETREMOTE(attrs->mask)) {
                 case GateMP_RemoteProtect_SYSTEM:
                     obj = (GateMP_Object *)
@@ -1214,6 +1211,8 @@ Int GateMP_openByAddr(Ptr sharedAddr, GateMP_Handle *handle)
                     break;
 
                 default:
+                    status = GateMP_E_FAIL;
+                    /* TODO: add failure */
                     break;
             }
 
@@ -1223,7 +1222,7 @@ Int GateMP_openByAddr(Ptr sharedAddr, GateMP_Handle *handle)
              *  by setting the openFlag to TRUE.
              */
             if ((status == GateMP_S_SUCCESS) && (obj == NULL)) {
-                /* Create a GateMP object with the openFlag set to true */
+                /* create a GateMP object with the openFlag set to true */
                 params.name = NULL;
                 params.openFlag = TRUE;
                 params.sharedAddr = sharedAddr;
@@ -1245,7 +1244,7 @@ Int GateMP_openByAddr(Ptr sharedAddr, GateMP_Handle *handle)
         }
     }
 
-    GT_1trace (curTrace, GT_LEAVE, "GateMP_openByAddr", status);
+    GT_1trace(curTrace, GT_LEAVE, "GateMP_openByAddr:", status);
 
     return (status);
 }

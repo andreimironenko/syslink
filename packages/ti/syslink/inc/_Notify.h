@@ -66,48 +66,81 @@
 #if !defined (_Notify_H_0x5f84)
 #define _Notify_H_0x5f84
 
-#if !defined (USE_SYSLINK_NOTIFY)
+#if defined (DONT_USE_SYSLINK_NOTIFY)
+/* force non-use of SysLink's Notify */
 
+#undef USE_SYSLINK_NOTIFY
+
+#else  /* defined (DONT_USE_SYSLINK_NOTIFY) */
+
+#if !defined (USE_SYSLINK_NOTIFY)
 /* USE_SYSLINK_NOTIFY is not -D'ed on the command line, auto-set for Linux */
 
 #if defined (__KERNEL__)
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,33)
 #include <generated/autoconf.h>
 #else
 #include <linux/autoconf.h>
 #endif
+
 #if defined (CONFIG_SYSLINK_NOTIFY)
+
 #if !CONFIG_SYSLINK_NOTIFY
-/* only #define USE_SYSLINK_NOTIFY if CONFIG_SYSLINK_NOTIFY=0 in kernel */
+/* #define USE_SYSLINK_NOTIFY if CONFIG_SYSLINK_NOTIFY=0 */
 #define USE_SYSLINK_NOTIFY
 #endif /* !CONFIG_SYSLINK_NOTIFY */
+
 #else /* defined (CONFIG_SYSLINK_NOTIFY) */
-/* if CONFIG_SYSLINK_NOTIFY not spec'd in kernel, #define USE_SYSLINK_NOTIFY */
+
+#if defined (CONFIG_SYSLINK_NOTIFY_MODULE)
+
+#if !CONFIG_SYSLINK_NOTIFY_MODULE
+/* #define USE_SYSLINK_NOTIFY if CONFIG_SYSLINK_NOTIFY_MODULE=0 */
 #define USE_SYSLINK_NOTIFY
+#endif /* !CONFIG_SYSLINK_NOTIFY_MODULE */
+
+#else  /* defined (CONFIG_SYSLINK_NOTIFY_MODULE) */
+
+/*
+ * If neither CONFIG_SYSLINK_NOTIFY nor CONFIG_SYSLINK_NOTIFY_MODULE are
+ * spec'd in kernel, #define USE_SYSLINK_NOTIFY
+ */
+#define USE_SYSLINK_NOTIFY
+
+#endif /* defined (CONFIG_SYSLINK_NOTIFY_MODULE) */
 #endif /* defined (CONFIG_SYSLINK_NOTIFY) */
 #endif /* defined (__KERNEL__) */
 
 #else  /* !defined (USE_SYSLINK_NOTIFY) */
-
 /* USE_SYSLINK_NOTIFY is -D'ed on the command line, sanity check for Linux */
 
 #if defined (__KERNEL__)
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,33)
 #include <generated/autoconf.h>
 #else
 #include <linux/autoconf.h>
 #endif
+
 #if defined (CONFIG_SYSLINK_NOTIFY)
+
 #if CONFIG_SYSLINK_NOTIFY
 /* If building for Linux kernel and 'notify' is in kernel too, error */
 #error Invalid configuration: Linux kernel contains 'notify' support while SysLink is configured to use its Notify module (USE_SYSLINK_NOTIFY=1)
 #endif /* CONFIG_SYSLINK_NOTIFY */
+
 #endif /* defined (CONFIG_SYSLINK_NOTIFY) */
 #endif /* defined (__KERNEL__) */
-
 #endif /* !defined (USE_SYSLINK_NOTIFY) */
+#endif /* defined (DONT_USE_SYSLINK_NOTIFY) */
 
+#if defined(SYSLINK_NOTIFYDRIVER_CIRC)
 
+#if !defined(USE_SYSLINK_NOTIFY)
+#error Invalid configuration: SysLink notify driver circ is configured which requires USE_SYSLINK_NOTIFY to be enabled
+#endif /* !USE_SYSLINK_NOTIFY */
+#endif /* defined (SYSLINK_NOTIFYDRIVER_CIRC) */
 
 /* Module headers */
 #include <ti/ipc/Notify.h>

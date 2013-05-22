@@ -329,32 +329,28 @@ static int MessageQDrv_close(struct inode *inode, struct file *filp)
     return(0);
 }
 
-/*!
- *  @brief  Linux specific function to close the driver.
+/*
+ *  ======== MessageQDrv_ioctl ========
+ *
  */
-static
-long MessageQDrv_ioctl (struct file *  filp,
-                        unsigned int   cmd,
-                        unsigned long  args)
+static long MessageQDrv_ioctl(struct file *filp, unsigned int cmd,
+        unsigned long args)
 {
-    int                   osStatus = 0;
-    MessageQDrv_CmdArgs * dstArgs  = (MessageQDrv_CmdArgs *) args;
-    Int32                 status   = MessageQ_S_SUCCESS;
-    Int32                 ret;
-    MessageQDrv_CmdArgs   cargs;
-    Osal_Pid pid;
+    int                         osStatus = 0;
+    MessageQDrv_CmdArgs *       dstArgs = (MessageQDrv_CmdArgs *)args;
+    Int32                       status = MessageQ_S_SUCCESS;
+    Int32                       ret;
+    MessageQDrv_CmdArgs         cargs;
+    Osal_Pid                    pid;
 
-    GT_3trace (curTrace, GT_ENTER, "MessageQDrv_ioctl",
-               filp, cmd, args);
+    GT_3trace(curTrace, GT_ENTER, "MessageQDrv_ioctl", filp, cmd, args);
 
     /* save the process id for resource tracking */
     pid = pid_nr(filp->f_owner.pid);
 
-    /* Copy the full args from user-side */
-    ret = copy_from_user (&cargs,
-                          dstArgs,
-                          sizeof (MessageQDrv_CmdArgs));
-    GT_assert (curTrace, (ret == 0));
+    /* copy the full args from user space */
+    ret = copy_from_user(&cargs, dstArgs, sizeof(MessageQDrv_CmdArgs));
+    GT_assert(curTrace, (ret == 0));
 
     switch (cmd) {
         case CMD_MESSAGEQ_PUT:
@@ -632,7 +628,6 @@ long MessageQDrv_ioctl (struct file *  filp,
 
         case CMD_MESSAGEQ_SETUP: {
             MessageQ_Config config;
-            pid_t pid = 0;
 
             /* copy config struct from user space */
             status = copy_from_user(&config, cargs.args.setup.config,
@@ -647,8 +642,6 @@ long MessageQDrv_ioctl (struct file *  filp,
 
             /* register process with resource tracker */
             if (status == MessageQ_S_SUCCESS) {
-                pid = pid_nr(filp->f_owner.pid);
-
                 status = ResTrack_register(MessageQDrv_state.resTrack, pid);
 
                 if (status < 0) {
@@ -656,6 +649,7 @@ long MessageQDrv_ioctl (struct file *  filp,
                             "MessageQDrv_ioctl", status,
                             "resource tracker register failed");
                     status = MessageQ_E_FAIL;
+                    pid = 0;
                 }
             }
 
@@ -680,10 +674,7 @@ long MessageQDrv_ioctl (struct file *  filp,
         break;
 
         case CMD_MESSAGEQ_DESTROY: {
-            pid_t pid;
-
             /* unregister process from resource tracker */
-            pid = pid_nr(filp->f_owner.pid);
             status = ResTrack_unregister(MessageQDrv_state.resTrack, pid);
             GT_assert(curTrace, (status >= 0));
 
@@ -748,10 +739,8 @@ long MessageQDrv_ioctl (struct file *  filp,
 
     cargs.apiStatus = status;
 
-    /* Copy the full args to the user-side. */
-    ret = copy_to_user (dstArgs,
-                        &cargs,
-                        sizeof (MessageQDrv_CmdArgs));
+    /* copy the full args to the user space */
+    ret = copy_to_user(dstArgs, &cargs, sizeof(MessageQDrv_CmdArgs));
     GT_assert (curTrace, (ret == 0));
 
     GT_1trace (curTrace, GT_LEAVE, "MessageQDrv_ioctl",

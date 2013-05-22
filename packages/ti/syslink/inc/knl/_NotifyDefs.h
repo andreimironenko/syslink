@@ -79,13 +79,11 @@ extern "C" {
 #define Notify_MAKE_MAGICSTAMP(x) ((Notify_MODULEID << 12u) | (x))
 
 /*!
- *  @def    Notify_MAX_DRIVERS
  *  @brief  Maximum number of Notify drivers supported.
  */
 #define Notify_MAX_DRIVERS   16u
 
 /*!
- *  @def    Notify_SYSTEMKEY_MASK
  *  @brief  Mask to check for system key.
  */
 #define Notify_SYSTEMKEY_MASK  (UInt16) 0xFFFF0000

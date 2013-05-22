@@ -28,5 +28,5 @@ ex04_sharedregion       Use SharedRegion to pass a buffer between the cores.
 ex05_heapbufmp          Use HeapBufMP to pass a buffer between host and slave.
 ex06_listmp             Use ListMP to add to the list that is used by the cores.
 ex07_gatemp             Use GateMP to protect a shared buffer between the cores.
-ex08_ringio             Use RingIO to pass data from host to salve.
+ex08_ringio             Use RingIO to pass data from host to slave.
 ex64_metal              Load and run a non-bios executable.

@@ -155,11 +155,14 @@ typedef struct IpcDrv_CmdArgs {
         struct {
             Osal_Pid            pid;
             UInt32              payload;
-        } addTerminateEvent;
+            UInt16              procId;
+            Int                 policy;
+        } addTermEvent;
 
         struct {
             Osal_Pid            pid;
-        } removeTerminateEvent;
+            UInt16              procId;
+        } removeTermEvent;
 
         struct {
             Osal_Pid            pid;

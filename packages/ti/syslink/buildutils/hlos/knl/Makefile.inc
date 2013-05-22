@@ -172,20 +172,27 @@ ifeq ("$(USE_SYSLINK_NOTIFY)", "1")
 COMPILE_FLAGS += -DUSE_SYSLINK_NOTIFY
 endif
 
+ifeq ("$(USE_SYSLINK_NOTIFY)", "0")
+COMPILE_FLAGS += -DDONT_USE_SYSLINK_NOTIFY
+endif # ifeq ("$(USE_SYSLINK_NOTIFY)", "0")
+
 # Choose the Notify Driver to be used.
 ifeq ("$(SYSLINK_NOTIFYDRIVER)", "NOTIFYDRIVERCIRC")
-COMPILE_FLAGS += -DSYSLINK_NOTIFYDRIVER_CIRC -DUSE_SYSLINK_NOTIFY
+COMPILE_FLAGS += -DSYSLINK_NOTIFYDRIVER_CIRC
+else
+# The default is NOTIFYDRIVERSHM
+COMPILE_FLAGS += -DSYSLINK_NOTIFYDRIVER_SHM
 endif
 
 # Choose the MessageQ Transport to be used.
 ifeq ("$(SYSLINK_TRANSPORT)", "TRANSPORTSHMNOTIFY")
 COMPILE_FLAGS += -DSYSLINK_TRANSPORT_SHMNOTIFY
-else
-ifeq ("$(SYSLINK_TRANSPORT)", "TRANSPORTSHMCIRC")
+else ifeq ("$(SYSLINK_TRANSPORT)", "TRANSPORTSHMCIRC")
 COMPILE_FLAGS += -DSYSLINK_TRANSPORT_SHMCIRC
+else
+# The default is TRANSPORTSHM
+COMPILE_FLAGS += -DSYSLINK_TRANSPORT_SHM
 endif
-endif
-
 
 # ---------------------------------------------------------------------------- #
 # Kernel dir: App build can override.                                          #

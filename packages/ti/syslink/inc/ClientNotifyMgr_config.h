@@ -64,36 +64,31 @@ extern "C" {
  */
 
 /*!
- *  @def    ClientNotifyMgr_maxNameLen
- *  @brief  Maximum length of the  name string in bytes.
+ *  @brief  Maximum length of the name string in bytes.
  */
 #define ClientNotifyMgr_maxNameLen                 (32u)
 
 /*!
- *  @def    ClientNotifyMgr_CACHE_LINESIZE
  *  @brief  Cache line size.
  */
 #define ClientNotifyMgr_CACHE_LINESIZE             (128u)
 
 /*!
- *  @def    ClientNotifyMgr_maxInstances
  *  @brief  Maximum number of instances managed by ClientNotifyMgr module.
  */
 #define ClientNotifyMgr_maxInstances               (256u)
 
 /*!
- *  @def    ClientNotifyMgr_MAX_CLIENTS
- *  @brief  Maximum number of clients supported for each  instance.
+ *  @brief  Maximum number of clients supported for each instance.
  */
 #define ClientNotifyMgr_MAX_CLIENTS                (32u)
 
 /*!
- *  @def    MAX_SUB_NOTIFYENTRIES
- *  @brief  Maximum number of sub notification entries  for this instance.
- *          Each  notfication entry of type NotifyParamInfo will contain this
+ *  @brief  Maximum number of sub notification entries for this instance.
+ *          Each notfication entry of type NotifyParamInfo will contain this
  *          number of sub notification entries for the same call back function.
- *          This enables an instance of  this module  to use same call back fxn
- *          and watermark conditions for event  notifications to notify the
+ *          This enables an instance of this module to use same call back fxn
+ *          and watermark conditions for event notifications to notify the
  *          other clients of the instance.
  */
 #define CLIENTNOTIFYMGR_MAX_SUB_NOTIFYENTRIES       (64u)

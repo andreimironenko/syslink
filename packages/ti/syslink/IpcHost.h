@@ -84,24 +84,76 @@ extern "C" {
  */
 
 /**
+ *  @brief      Use the stop terminate policy
+ *
+ *  When the host process termiantes (e.g. CTRL-C, SIGKILL), this
+ *  terminate policy will stop the remote processor and place it
+ *  into reset. The terminate action is carried out by the SysLink
+ *  driver on behalf of the terminated process.
+ */
+#define Ipc_TERMINATEPOLICY_STOP 1
+
+
+/**
+ *  @brief      Use the notify terminate policy
+ *
+ *  When the host process termiantes (e.g. CTRL-C, SIGKILL), this
+ *  terminate policy will send a notify event to the remote processor.
+ *  The lineId and eventId are determined by the remote executable
+ *  through configuration parameters (See ti/syslink/ipc/rtos/SysLink.xdc).
+ */
+#define Ipc_TERMINATEPOLICY_NOTIFY 2
+
+
+/**
+ *  @brief      Argument for the Ipc_CONTROLCMD_SETTERMINATEPOLICY command
+ *
+ *  Initialize a structure of this type with the desired terminate
+ *  policy. Pass the address of this structure as the @c arg parameter
+ *  to Ipc_control() along with this command type. This must be done before
+ *  calling the load callback.
+ *
+ *  @par Example:
+ *
+ *  @code
+ *      Ipc_Terminate terminateConfig;
+ *
+ *      // set the requested terminate policy
+ *      terminateConfig.policy = Ipc_TERMINATEPOLICY_STOP;
+ *      Ipc_control(procId, Ipc_CONTROLCMD_SETTERMINATEPOLICY,
+ *              (Ptr)(&terminateConfig));
+ *
+ *      // now invoke the load callback
+ *      Ipc_control(procId, Ipc_CONTROLCMD_LOADCALLBACK, NULL);
+ *  @endcode
+ *
+ *  @sa Ipc_TERMINATEPOLICY_STOP
+ *  @sa Ipc_TERMINATEPOLICY_NOTIFY
+ */
+typedef struct {
+    Int policy;                 /**< terminate policy */
+} Ipc_Terminate;
+
+
+/**
  *  @brief      Control command ID for load callback.
  *
- *  @remarks    This command must be sent (via Ipc_control()) before using IPC
- *              with the slave, and after loading the slave.
+ *  This command must be sent (via Ipc_control()) before using IPC
+ *  with the slave, and after loading the slave.
  *
- *  @remarks    This call ensures resources (e.g. Shared Region 0) are visible
- *              to the slave (for example, by enabling the slave-side MMU).
- *              This call then typically enables the slave-side call to
- *              Ipc_start() to succeed.
+ *  This call ensures resources (e.g. Shared Region 0) are visible
+ *  to the slave (for example, by enabling the slave-side MMU).
+ *  This call then typically enables the slave-side call to
+ *  Ipc_start() to succeed.
  *
- *  @remarks    When ProcMgr is used to load the slave (the typical case),
- *              the @c arg passed to Ipc_control() should be NULL.
+ *  When ProcMgr is used to load the slave (the typical case),
+ *  the @c arg passed to Ipc_control() should be NULL.
  *
- *  @remarks    When ProcMgr is <i>not</i> used to load the slave (supported,
- *              but not the typical case), the @c arg passed to Ipc_control()
- *              must be a pointer to the slave-side address of the 
- *              @c _Ipc_ResetVector symbol.  This is often obtained by 
- *              inspecting the slave-side executable's .map file.
+ *  When ProcMgr is <i>not</i> used to load the slave (supported,
+ *  but not the typical case), the @c arg passed to Ipc_control()
+ *  must be a pointer to the slave-side address of the
+ *  @c _Ipc_ResetVector symbol.  This is often obtained by
+ *  inspecting the slave-side executable's .map file.
  *
  *  @sa         Ipc_control()
  */
@@ -111,16 +163,16 @@ extern "C" {
 /**
  *  @brief      Control command ID for start callback.
  *
- *  @remarks    This command must be sent (via Ipc_control()) before using IPC
- *              with the slave, and after sending the
- *              #Ipc_CONTROLCMD_LOADCALLBACK command.
+ *  This command must be sent (via Ipc_control()) before using IPC
+ *  with the slave, and after sending the
+ *  #Ipc_CONTROLCMD_LOADCALLBACK command.
  *
- *  @remarks    This call performs a handshake with the slave processor,
- *              typically enabling the slave-side call to Ipc_attach() to
- *              succeed.
+ *  This call performs a handshake with the slave processor,
+ *  typically enabling the slave-side call to Ipc_attach() to
+ *  succeed.
  *
- *  @remarks    When sending this command, the @c arg passed to Ipc_control()
- *              should be NULL.
+ *  When sending this command, the @c arg passed to Ipc_control()
+ *  should be NULL.
  *
  *  @sa         Ipc_control()
  */
@@ -130,27 +182,44 @@ extern "C" {
 /**
  *  @brief      Control command ID for stop callback.
  *
- *  @remarks    This command must be sent (via Ipc_control()) to detach from
- *              an attached slave.
+ *  This command must be sent (via Ipc_control()) to detach from
+ *  an attached slave.
  *
- *  @remarks    This call first performs a handshake with the slave processor,
- *              typically enabling the slave-side calls to Ipc_detach() and
- *              Ipc_stop() to succeed.  It then may make resources
- *              (e.g. Shared Region 0) inaccessible to the slave (for example
- *              by disabling the slave's MMU).
+ *  This call first performs a handshake with the slave processor,
+ *  typically enabling the slave-side calls to Ipc_detach() and
+ *  Ipc_stop() to succeed.  It then may make resources
+ *  (e.g. Shared Region 0) inaccessible to the slave (for example
+ *  by disabling the slave's MMU).
  *
- *  @remarks    When ProcMgr is used to load the slave (the typical case),
- *              the @c arg passed to Ipc_control() should be NULL.
+ *  When ProcMgr is used to load the slave (the typical case),
+ *  the @c arg passed to Ipc_control() should be NULL.
  *
- *  @remarks    When ProcMgr is <i>not</i> used to load the slave (supported,
- *              but not the typical case), the @c arg passed to Ipc_control()
- *              must be a pointer to the slave-side address of the 
- *              @c _Ipc_ResetVector symbol.  This is often obtained by 
- *              inspecting the slave-side executable's .map file.
+ *  When ProcMgr is <i>not</i> used to load the slave (supported,
+ *  but not the typical case), the @c arg passed to Ipc_control()
+ *  must be a pointer to the slave-side address of the
+ *  @c _Ipc_ResetVector symbol.  This is often obtained by
+ *  inspecting the slave-side executable's .map file.
  *
  *  @sa         Ipc_control()
  */
 #define Ipc_CONTROLCMD_STOPCALLBACK  (0xBABE0002)
+
+
+/**
+ *  @brief      Control command ID for specifying the terminate handling policy
+ *
+ *  Specify the terminate policy to be used by SysLink in the
+ *  event that the application terminates. The SysLink driver
+ *  will perform the requested terminate actions on behalf of
+ *  the terminated application. This is typically used to handle
+ *  cleanup of resources.
+ *
+ *  The @c arg passed to Ipc_control() must be pointer to an
+ *  Ipc_Terminate structure.
+ *
+ *  @sa         Ipc_control()
+ */
+#define Ipc_CONTROLCMD_SETTERMINATEPOLICY  (0xBABE0003)
 
 
 /**

@@ -103,7 +103,7 @@ static Notify_Handle NotifyCircSetup_notifyHandle [MultiProc_MAXPROCESSORS];
 Int
 NotifyCircSetupDm8168_attach (UInt16 procId, Ptr sharedAddr)
 {
-    Int32  status   = Notify_S_SUCCESS;
+    Int32 status = Notify_S_SUCCESS;
     NotifyDriverCirc_Params notifyCircParams;
 
     GT_1trace (curTrace, GT_ENTER, "NotifyCircSetupDm8168_attach", sharedAddr);

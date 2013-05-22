@@ -127,7 +127,7 @@ typedef struct Ipc_ConfigHead {
 
 /*!
  *   This structure captures Configuration details of a module/instance
- *   written by a slave to synchornize with a remote slave/HOST
+ *   written by a slave to synchronize with a remote slave/HOST
  */
 typedef struct Ipc_ConfigEntry {
     volatile Bits32 remoteProcId;
@@ -920,24 +920,24 @@ Ptr Ipc_getMasterAddr (UInt16 remoteProcId, Ptr sharedAddr)
 /*
  *  ======== Ipc_getRegion0ReservedSize ========
  */
-SizeT Ipc_getRegion0ReservedSize (Void)
+SizeT Ipc_getRegion0ReservedSize(Void)
 {
-    SizeT reservedSize = Ipc_reservedSizePerProc ();
+    SizeT reservedSize = Ipc_reservedSizePerProc();
 
-    GT_0trace (curTrace, GT_ENTER, "Ipc_getRegion0ReservedSize");
+    GT_0trace(curTrace, GT_ENTER, "Ipc_getRegion0ReservedSize");
 
     /* Calculate the total amount to reserve */
-    reservedSize = reservedSize * MultiProc_getNumProcessors  ();
+    reservedSize = reservedSize * MultiProc_getNumProcessors();
 
-    GT_1trace (curTrace, GT_LEAVE, "Ipc_getRegion0ReservedSize", reservedSize);
+    GT_1trace(curTrace, GT_LEAVE, "Ipc_getRegion0ReservedSize", reservedSize);
 
-    return  (reservedSize);
+    return (reservedSize);
 }
 
 /*
  *  ======== Ipc_getSlaveAddr ========
  */
-Ptr Ipc_getSlaveAddr (UInt16 remoteProcId, Ptr sharedAddr)
+Ptr Ipc_getSlaveAddr(UInt16 remoteProcId, Ptr sharedAddr)
 {
     SizeT                   reservedSize = Ipc_reservedSizePerProc ();
     Int                     slot;
@@ -1226,26 +1226,26 @@ Int Ipc_readConfig (UInt16 remoteProcId, UInt32 tag, Ptr cfg, SizeT size)
 /*
  *  ======== Ipc_reservedSizePerProc ========
  */
-SizeT Ipc_reservedSizePerProc (Void)
+SizeT Ipc_reservedSizePerProc(Void)
 {
-    SizeT reservedSize = sizeof (Ipc_Reserved) * MultiProc_getNumProcessors  ();
-    SizeT cacheLineSize = SharedRegion_getCacheLineSize (0);
+    SizeT reservedSize = sizeof(Ipc_Reserved) * MultiProc_getNumProcessors();
+    SizeT cacheLineSize = SharedRegion_getCacheLineSize(0);
 
-    GT_0trace (curTrace, GT_ENTER, "Ipc_reservedSizePerProc");
+    GT_0trace(curTrace, GT_ENTER, "Ipc_reservedSizePerProc");
 
     /* Calculate amount to reserve per processor */
-    if  (cacheLineSize > reservedSize) {
+    if (cacheLineSize > reservedSize) {
         /* Use cacheLineSize if larger than reservedSize */
         reservedSize = cacheLineSize;
     }
     else {
         /* Round reservedSize to cacheLineSize */
-        reservedSize = _Ipc_roundup (reservedSize, cacheLineSize);
+        reservedSize = _Ipc_roundup(reservedSize, cacheLineSize);
     }
 
-    GT_1trace (curTrace, GT_LEAVE, "Ipc_reservedSizePerProc", reservedSize);
+    GT_1trace(curTrace, GT_LEAVE, "Ipc_reservedSizePerProc", reservedSize);
 
-    return  (reservedSize);
+    return (reservedSize);
 }
 
 /*!
@@ -1401,30 +1401,26 @@ Int Ipc_start (Void)
         /* if entry is not valid then return */
         if  (entry.isValid == FALSE) {
             status = Ipc_E_NOTREADY;
-            GT_setFailureReason (curTrace,
-                                 GT_4CLASS,
-                                 "Ipc_start",
-                                 status,
-                                 "entry.isValid == FALSE!");
+            GT_setFailureReason (curTrace, GT_4CLASS, "Ipc_start", status,
+                    "entry.isValid == FALSE!");
         }
         else {
             /*
              *  Need to reserve memory in region 0 for processor synchronization.
-             *  This must done before SharedRegion_start ().
+             *  This must done before SharedRegion_start().
              */
-            ipcSharedAddr = SharedRegion_reserveMemory (0,
-                                                 Ipc_getRegion0ReservedSize ());
+            ipcSharedAddr = SharedRegion_reserveMemory(0,
+                    Ipc_getRegion0ReservedSize());
 
-            /* must reserve memory for GateMP before SharedRegion_start () */
-            gateMPSharedAddr = SharedRegion_reserveMemory (0,
-                               GateMP_getRegion0ReservedSize ());
+            /* must reserve memory for GateMP before SharedRegion_start() */
+            gateMPSharedAddr = SharedRegion_reserveMemory(0,
+                    GateMP_getRegion0ReservedSize());
 
-            /* Init params for default gate (must match those in GateMP_start ()
-             */
-            GateMP_Params_init (&gateMPParams);
+            /* Init params for default gate (must match those in GateMP_start()) */
+            GateMP_Params_init(&gateMPParams);
             gateMPParams.localProtect  = GateMP_LocalProtect_TASKLET;
 
-            if  (MultiProc_getNumProcessors () > 1) {
+            if (MultiProc_getNumProcessors () > 1) {
                 gateMPParams.remoteProtect = GateMP_RemoteProtect_SYSTEM;
             }
             else {
@@ -1432,28 +1428,25 @@ Int Ipc_start (Void)
             }
 
             /* reserve memory for default gate before SharedRegion_start () */
-            SharedRegion_reserveMemory (0, GateMP_sharedMemReq (&gateMPParams));
+            SharedRegion_reserveMemory(0, GateMP_sharedMemReq (&gateMPParams));
 
             /* clear the reserved memory */
-            SharedRegion_clearReservedMemory ();
+            SharedRegion_clearReservedMemory();
 
             /* Set shared addresses */
             Ipc_module->ipcSharedAddr = ipcSharedAddr;
             Ipc_module->gateMPSharedAddr = gateMPSharedAddr;
 
             /* create default GateMP, must be called before SharedRegion start */
-            status = GateMP_start (Ipc_module->gateMPSharedAddr);
-            if  (status < 0) {
-                GT_setFailureReason (curTrace,
-                                     GT_4CLASS,
-                                     "Ipc_start",
-                                     status,
-                                     "GateMP_start failed!");
+            status = GateMP_start(Ipc_module->gateMPSharedAddr);
+            if (status < 0) {
+                GT_setFailureReason (curTrace, GT_4CLASS, "Ipc_start", status,
+                        "GateMP_start failed!");
             }
             else {
                 /* create HeapMemMP in each SharedRegion */
-                status = SharedRegion_start ();
-                if  (status < 0) {
+                status = SharedRegion_start();
+                if (status < 0) {
                     GT_setFailureReason (curTrace,
                                          GT_4CLASS,
                                          "Ipc_start",
@@ -1465,14 +1458,14 @@ Int Ipc_start (Void)
                     if  (Ipc_module->procSync == Ipc_ProcSync_ALL) {
                         /* Must attach to owner first to get default GateMP and
                          * HeapMemMP */
-                        if  (MultiProc_self () != entry.ownerProcId) {
+                        if (MultiProc_self() != entry.ownerProcId) {
                             do {
-                                status = Ipc_attach (entry.ownerProcId);
-                            } while  (status == Ipc_E_NOTREADY);
+                                status = Ipc_attach(entry.ownerProcId);
+                            } while (status == Ipc_E_NOTREADY);
                         }
-                        if  (status >= 0) {
+                        if (status >= 0) {
                             /* Loop to attach to all other processors */
-                            for  (i = 0; i < MultiProc_getNumProcessors  (); i++) {
+                            for  (i = 0; i < MultiProc_getNumProcessors(); i++) {
                                 if  (   (i == MultiProc_self ())
                                      || (i == entry.ownerProcId)) {
                                     continue;
@@ -1485,8 +1478,8 @@ Int Ipc_start (Void)
                                 }
                                 /* call Ipc_attach for every remote processor */
                                 do {
-                                    status = Ipc_attach (i);
-                                } while  (status == Ipc_E_NOTREADY);
+                                    status = Ipc_attach(i);
+                                } while (status == Ipc_E_NOTREADY);
                             }
                         }
                     }

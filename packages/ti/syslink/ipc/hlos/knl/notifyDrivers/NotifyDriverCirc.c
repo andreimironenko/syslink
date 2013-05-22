@@ -712,11 +712,11 @@ NotifyDriverCirc_create (const NotifyDriverCirc_Params * params)
                  *  Override the user cacheEnabled setting if the region
                  *  cacheEnabled is FALSE.
                  */
-                if (!SharedRegion_isCacheEnabled (regionId)) {
+                if (!SharedRegion_isCacheEnabled(regionId)) {
                     obj->cacheEnabled = FALSE;
                 }
 
-                regionCacheSize = SharedRegion_getCacheLineSize (regionId);
+                regionCacheSize = SharedRegion_getCacheLineSize(regionId);
 
                 /*
                  *  Override the user cache line size setting if the region
@@ -730,26 +730,20 @@ NotifyDriverCirc_create (const NotifyDriverCirc_Params * params)
             /* Check if shared memory base addr is aligned to cache line
              * boundary.
              */
-            GT_assert (curTrace,
-                       ((UInt32) params->sharedAddr % minAlign == 0));
+            GT_assert(curTrace, ((UInt32) params->sharedAddr % minAlign == 0));
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
             if ((UInt32) params->sharedAddr % minAlign != 0) {
-                /*! @retval NULL params->sharedAddr does not meet cache
-                                 alignment constraints! */
                 status = Notify_E_FAIL;
-                GT_setFailureReason (curTrace,
-                                     GT_4CLASS,
-                                     "NotifyDriverCirc_create",
-                                      status,
-                                     "params->sharedAddr does not meet"
-                                     " cache alignment constraints!");
+                GT_setFailureReason(curTrace, GT_4CLASS,
+                        "NotifyDriverCirc_create", status,
+                        "params->sharedAddr has invalid cache alignment");
             }
             else {
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
                 obj->remoteProcId = params->remoteProcId;
                 obj->lineId = params->lineId;
 
-                if (params->remoteProcId > MultiProc_self ()) {
+                if (params->remoteProcId > MultiProc_self()) {
                     localIndex  = 0;
                     remoteIndex = 1;
                 }
@@ -762,10 +756,8 @@ NotifyDriverCirc_create (const NotifyDriverCirc_Params * params)
                 obj->spinCount = 0;
 
                 /* calculate the circular buffer size one-way */
-                circBufSize = _Ipc_roundup(
-                                        (  sizeof (NotifyDriverCirc_EventEntry)
-                                         * NotifyDriverCirc_module->numMsgs),
-                                        minAlign);
+                circBufSize = _Ipc_roundup((sizeof(NotifyDriverCirc_EventEntry) *
+                        NotifyDriverCirc_module->numMsgs), minAlign);
 
                 /* calculate the control size one-way */
                 ctrlSize = _Ipc_roundup(sizeof(Bits32), minAlign);
@@ -778,24 +770,24 @@ NotifyDriverCirc_create (const NotifyDriverCirc_Params * params)
                  *  These are all on different cache lines.
                  */
                 obj->putBuffer = (NotifyDriverCirc_EventEntry *)
-                            (   (UInt32)params->sharedAddr
-                             +  (localIndex * totalSelfSize));
+                        ((UInt32)params->sharedAddr +
+                        (localIndex * totalSelfSize));
 
                 obj->putWriteIndex = (Bits32 *)
-                                     ((UInt32)obj->putBuffer + circBufSize);
+                        ((UInt32)obj->putBuffer + circBufSize);
 
                 obj->putReadIndex = (Bits32 *)
-                                    ((UInt32)obj->putWriteIndex + ctrlSize);
+                        ((UInt32)obj->putWriteIndex + ctrlSize);
 
                 obj->getBuffer = (NotifyDriverCirc_EventEntry *)
-                                        (   (UInt32)params->sharedAddr
-                                         +  (remoteIndex * totalSelfSize));
+                        ((UInt32)params->sharedAddr
+                        +  (remoteIndex * totalSelfSize));
 
-                obj->getWriteIndex = (Bits32 *) (   (UInt32)obj->getBuffer
-                                                 +  circBufSize);
+                obj->getWriteIndex = (Bits32 *) ((UInt32)obj->getBuffer
+                        + circBufSize);
 
-                obj->getReadIndex = (Bits32 *) (    (UInt32) obj->getWriteIndex
-                                                +   ctrlSize);
+                obj->getReadIndex = (Bits32 *)((UInt32)obj->getWriteIndex
+                        + ctrlSize);
 
                 /*
                  *  Calculate the size for cache wb/inv in sendEvent and isr.
@@ -803,29 +795,24 @@ NotifyDriverCirc_create (const NotifyDriverCirc_Params * params)
                  *  [sizeof(EventEntry) * numMsgs] + [the sizeof(Ptr)]
                  *  aligned to a cache line.
                  */
-                obj->opCacheSize = (    (UInt32) obj->putReadIndex
-                                    -   (UInt32) obj->putBuffer);
+                obj->opCacheSize = ((UInt32)obj->putReadIndex
+                        - (UInt32)obj->putBuffer);
 
                 /* init the putWrite and putRead Index to 0 */
-                obj->putWriteIndex [0] = 0;
-                obj->putReadIndex [0] = 0;
+                obj->putWriteIndex[0] = 0;
+                obj->putReadIndex[0] = 0;
 
                 /* cache wb the putWrite/Read Index but no need to inv them */
                 if (obj->cacheEnabled) {
-                    Cache_wb (obj->putWriteIndex,
-                              sizeof(Bits32),
-                              Cache_Type_ALL,
-                              TRUE);
+                    Cache_wb(obj->putWriteIndex, sizeof(Bits32),
+                            Cache_Type_ALL, TRUE);
 
-                    Cache_wb (obj->putReadIndex,
-                              sizeof(Bits32),
-                              Cache_Type_ALL,
-                              TRUE);
+                    Cache_wb(obj->putReadIndex, sizeof(Bits32),
+                            Cache_Type_ALL, TRUE);
+
                    /* invalidate any stale data of the get buffer and indexes */
-                   Cache_inv (obj->getBuffer,
-                              totalSelfSize,
-                              Cache_Type_ALL,
-                              TRUE);
+                   Cache_inv(obj->getBuffer, totalSelfSize,
+                            Cache_Type_ALL, TRUE);
                 }
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
             }
@@ -845,13 +832,10 @@ NotifyDriverCirc_create (const NotifyDriverCirc_Params * params)
             IGateProvider_enter (NotifyDriverCirc_state.gateHandle);
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
             if (status < 0) {
-                /*! @retval NULL Failed to register interrupt! */
                 status = Notify_E_FAIL;
-                GT_setFailureReason (curTrace,
-                                     GT_4CLASS,
-                                     "NotifyDriverCirc_create",
-                                     status,
-                                     "ArchIpcInt_interruptRegister failed");
+                GT_setFailureReason(curTrace, GT_4CLASS,
+                        "NotifyDriverCirc_create", status,
+                        "ArchIpcInt_interruptRegister failed");
             }
             /* Indicate that the driver is initialized for this processor
              * only when the corresponding Notify driver is also created,
@@ -865,14 +849,10 @@ NotifyDriverCirc_create (const NotifyDriverCirc_Params * params)
             if (obj != NULL) {
                 ArchIpcInt_interruptUnregister(obj->remoteProcId);
 
-                Memory_free (NULL,
-                             obj,
-                             sizeof (NotifyDriverCirc_Object));
+                Memory_free(NULL, obj, sizeof(NotifyDriverCirc_Object));
                 obj = NULL;
 
-                Memory_free (NULL,
-                             notifyDrvObj,
-                             sizeof (INotifyDriver_Object));
+                Memory_free(NULL, notifyDrvObj, sizeof(INotifyDriver_Object));
                 notifyDrvObj = NULL;
                 /* Clear the NotifyDriverCirc handle in the local array. */
                 GT_assert (curTrace,
@@ -907,8 +887,7 @@ NotifyDriverCirc_create (const NotifyDriverCirc_Params * params)
  *  @sa         NotifyDriverCirc_create, Notify_unregisterDriver, List_delete,
  *              OsalIsr_uninstall, OsalIsr_delete
  */
-Int
-NotifyDriverCirc_delete (INotifyDriver_Handle * handlePtr)
+Int NotifyDriverCirc_delete(INotifyDriver_Handle *handlePtr)
 {
     Int                       status       = Notify_S_SUCCESS;
     Int                       tmpStatus    = Notify_S_SUCCESS;
@@ -916,40 +895,27 @@ NotifyDriverCirc_delete (INotifyDriver_Handle * handlePtr)
     INotifyDriver_Object *    notifyDrvObj = NULL;
     SizeT                     sizeToInv;
 
-    GT_1trace (curTrace, GT_ENTER, "NotifyDriverCirc_delete", handlePtr);
+    GT_1trace(curTrace, GT_ENTER, "NotifyDriverCirc_delete", handlePtr);
 
-    GT_assert (curTrace, (handlePtr != NULL));
-    GT_assert (curTrace, (handlePtr != NULL) && (*handlePtr != NULL));
+    GT_assert(curTrace, (handlePtr != NULL));
+    GT_assert(curTrace, (handlePtr != NULL) && (*handlePtr != NULL));
 
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-    if (   Atomic_cmpmask_and_lt (&(NotifyDriverCirc_state.refCount),
-                                  NotifyDriverCirc_MAKE_MAGICSTAMP(0),
-                                  NotifyDriverCirc_MAKE_MAGICSTAMP(1))
-        == TRUE) {
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "NotifyDriverCirc_delete",
-                             Notify_E_INVALIDSTATE,
-                             "Module was not initialized!");
+    if (Atomic_cmpmask_and_lt(&(NotifyDriverCirc_state.refCount),
+            NotifyDriverCirc_MAKE_MAGICSTAMP(0),
+            NotifyDriverCirc_MAKE_MAGICSTAMP(1)) == TRUE) {
+        GT_setFailureReason(curTrace, GT_4CLASS, "NotifyDriverCirc_delete",
+                Notify_E_INVALIDSTATE, "Module was not initialized!");
     }
     else if (handlePtr == NULL) {
-        /*! @retval Notify_E_INVALIDARG Invalid NULL handlePtr pointer
-                                         specified*/
         status = Notify_E_INVALIDARG;
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "NotifyDriverCirc_delete",
-                             status,
-                             "Invalid NULL handlePtr pointer specified");
+        GT_setFailureReason(curTrace, GT_4CLASS, "NotifyDriverCirc_delete",
+                status, "Invalid NULL handlePtr pointer specified");
     }
     else if (*handlePtr == NULL) {
-        /*! @retval Notify_E_INVALIDARG Invalid NULL handle specified */
         status = Notify_E_INVALIDARG;
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "NotifyDriverCirc_delete",
-                             status,
-                             "Invalid NULL handle specified");
+        GT_setFailureReason(curTrace, GT_4CLASS, "NotifyDriverCirc_delete",
+                status, "Invalid NULL handle specified");
     }
     else {
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
@@ -960,33 +926,27 @@ NotifyDriverCirc_delete (INotifyDriver_Handle * handlePtr)
             tmpStatus = ArchIpcInt_interruptUnregister (obj->remoteProcId);
             if ((status >= 0) && (tmpStatus < 0)) {
                 status = tmpStatus;
-                GT_setFailureReason (curTrace,
-                                 GT_4CLASS,
-                                 "NotifyDriverCirc_delete",
-                                 status,
-                                 "ArchIpcInt_interruptUnregister failed!");
+                GT_setFailureReason(curTrace, GT_4CLASS,
+                        "NotifyDriverCirc_delete", status,
+                        "ArchIpcInt_interruptUnregister failed!");
             }
 
             if (obj->cacheEnabled) {
-                if (obj->remoteProcId > MultiProc_self ()) {
+                if (obj->remoteProcId > MultiProc_self()) {
                     /* calculate the size of the buffer and indexes for one side */
                     sizeToInv = ((UInt32)obj->getBuffer - (UInt32)obj->putBuffer);
 
                         /* invalidate the shared memory for this instance */
-                        Cache_inv (obj->putBuffer,
-                                   (sizeToInv * 2),
-                                   Cache_Type_ALL,
-                                   TRUE);
+                        Cache_inv(obj->putBuffer, (sizeToInv * 2),
+                                Cache_Type_ALL, TRUE);
                 }
                 else {
                     /* calculate the size of the buffer and indexes for one side */
                     sizeToInv = ((UInt32)obj->putBuffer - (UInt32)obj->getBuffer);
 
                     /* invalidate the shared memory for this instance */
-                    Cache_inv (obj->getBuffer,
-                               (sizeToInv * 2),
-                               Cache_Type_ALL,
-                               TRUE);
+                    Cache_inv(obj->getBuffer, (sizeToInv * 2),
+                               Cache_Type_ALL, TRUE);
                 }
             }
 
@@ -997,23 +957,19 @@ NotifyDriverCirc_delete (INotifyDriver_Handle * handlePtr)
                        (obj->params.lineId < Notify_MAX_INTLINES));
             NotifyDriverCirc_state.driverHandles
                     [obj->params.remoteProcId] [obj->params.lineId] = NULL;
-            Memory_free (NULL,
-                         obj,
-                         sizeof (NotifyDriverCirc_Object));
+            Memory_free(NULL, obj, sizeof(NotifyDriverCirc_Object));
             obj = NULL;
         }
 
-        Memory_free (NULL,
-                     notifyDrvObj,
-                     sizeof (INotifyDriver_Object));
+        Memory_free (NULL, notifyDrvObj, sizeof (INotifyDriver_Object));
         notifyDrvObj = NULL;
 
         *handlePtr = NULL;
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     }
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
 
-#if defined  (SYSLINK_INT_LOGGING)
+#if defined (SYSLINK_INT_LOGGING)
     Osal_printf ("****** Printing logging SysLogging_isrCount           : %d"
                  " ******\n",
                  SysLogging_isrCount);
@@ -1029,11 +985,10 @@ NotifyDriverCirc_delete (INotifyDriver_Handle * handlePtr)
     Osal_printf ("****** Printing logging SysLogging_NotifyCallbackCount: %d"
                  " ******\n",
                  SysLogging_NotifyCallbackCount);
-#endif /* if defined  (SYSLINK_INT_LOGGING) */
+#endif
 
     GT_1trace (curTrace, GT_LEAVE, "NotifyDriverCirc_delete", status);
 
-    /*! @retval Notify_S_SUCCESS Operation successfully completed. */
     return (status);
 }
 
@@ -1051,53 +1006,44 @@ NotifyDriverCirc_delete (INotifyDriver_Handle * handlePtr)
  *  @sa         NotifyDriverCirc_unregisterEvent, List_put
  *
  */
-Int
-NotifyDriverCirc_registerEvent (NotifyDriverCirc_Handle handle,
-                               UInt32                 eventId)
+Int NotifyDriverCirc_registerEvent(NotifyDriverCirc_Handle handle,
+        UInt32 eventId)
 {
     Int                             status    = Notify_S_SUCCESS;
     NotifyDriverCirc_Object *       obj;
     IArg                            key;
 
-    GT_2trace (curTrace,
-               GT_ENTER,
-               "NotifyDriverCirc_registerEvent",
-               handle,
-               eventId);
+    GT_2trace(curTrace, GT_ENTER, "NotifyDriverCirc_registerEvent", handle,
+            eventId);
 
-    GT_assert (curTrace, (handle != NULL));
+    GT_assert(curTrace, (handle != NULL));
 
     /* No need for parameter checking, since it is done by Notify module. */
 
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-    /* handle is specific to NotifyShmDriver, so check its validity. */
+    /* handle is specific to NotifyCircDriver, so check its validity. */
     if (handle == NULL) {
-       /*! @retval  Notify_E_DRIVERNOTREGISTERED Notify driver object is
-                                                 NULL. */
         status = Notify_E_DRIVERNOTREGISTERED;
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "NotifyDriverCirc_registerEvent",
-                             status,
-                             "Notify driver object is NULL.");
+        GT_setFailureReason(curTrace, GT_4CLASS,
+                "NotifyDriverCirc_registerEvent",
+                status, "Notify driver object is NULL.");
     }
     else {
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
         obj = (NotifyDriverCirc_Object *) handle;
 
         key = IGateProvider_enter (NotifyDriverCirc_state.gateHandle);
 
         /* Set the 'registered' bit */
-        SET_BIT (obj->evtRegMask, eventId);
+        SET_BIT(obj->evtRegMask, eventId);
 
-        IGateProvider_leave (NotifyDriverCirc_state.gateHandle, key);
+        IGateProvider_leave(NotifyDriverCirc_state.gateHandle, key);
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     }
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
 
-    GT_1trace (curTrace, GT_LEAVE, "NotifyDriverCirc_registerEvent", status);
+    GT_1trace(curTrace, GT_LEAVE, "NotifyDriverCirc_registerEvent", status);
 
-    /*! @retval Notify_S_SUCCESS Operation successfully completed. */
     return (status);
 }
 
@@ -1506,47 +1452,38 @@ NotifyDriverCirc_disableEvent (NotifyDriverCirc_Handle handle,
  *
  *  @sa         NotifyDriverCirc_disableEvent
  */
-Void
-NotifyDriverCirc_enableEvent (NotifyDriverCirc_Handle handle,
-                             UInt32              eventId)
+Void NotifyDriverCirc_enableEvent(NotifyDriverCirc_Handle handle,
+        UInt32 eventId)
 {
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     Int                      status = Notify_S_SUCCESS;
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
     NotifyDriverCirc_Object * obj;
 
-    GT_2trace (curTrace,
-               GT_ENTER,
-               "NotifyDriverCirc_enableEvent",
-               handle,
-               eventId);
+    GT_2trace(curTrace, GT_ENTER, "NotifyDriverCirc_enableEvent", handle,
+            eventId);
 
-    GT_assert (curTrace, (handle != NULL));
+    GT_assert(curTrace, (handle != NULL));
 
     /* No need for parameter checking, since it is done by Notify module. */
 
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-    /* handle is specific to NotifyShmDriver, so check its validity. */
+    /* handle is specific to NotifyCircDriver, so check its validity. */
     if (handle == NULL) {
-       /*! @retval  Notify_E_DRIVERNOTREGISTERED Notify driver object is
-                                                 NULL. */
         status = Notify_E_DRIVERNOTREGISTERED;
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "NotifyDriverCirc_enableEvent",
-                             status,
-                             "Notify driver object is NULL.");
+        GT_setFailureReason (curTrace, GT_4CLASS,
+                "NotifyDriverCirc_enableEvent", status,
+                "Notify driver object is NULL.");
     }
     else {
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
         obj = (NotifyDriverCirc_Object *) handle;
 
         /* Enable the receive interrupt. */
-        ArchIpcInt_interruptEnable (obj->remoteProcId,
-                                    obj->params.localIntId);
+        ArchIpcInt_interruptEnable(obj->remoteProcId, obj->params.localIntId);
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     }
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
 
     GT_0trace (curTrace, GT_LEAVE, "NotifyDriverCirc_enableEvent");
 }
@@ -1560,16 +1497,15 @@ NotifyDriverCirc_enableEvent (NotifyDriverCirc_Handle handle,
  *  @sa         NotifyDriverCirc_create
  *
  */
-SizeT
-NotifyDriverCirc_sharedMemReq (const NotifyDriverCirc_Params * params)
+SizeT NotifyDriverCirc_sharedMemReq(const NotifyDriverCirc_Params *params)
 {
-    SizeT  memReq = 0;
+    SizeT memReq = 0;
     UInt16 regionId;
-    SizeT  regionCacheSize;
-    SizeT  minAlign;
+    SizeT regionCacheSize;
+    SizeT minAlign;
 
     /* Ensure that params is non-NULL */
-    GT_assert (curTrace, (params != NULL));
+    GT_assert(curTrace, (params != NULL));
 
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     if (   Atomic_cmpmask_and_lt (&(NotifyDriverCirc_state.refCount),

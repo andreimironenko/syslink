@@ -79,19 +79,16 @@ extern "C" {
 
 
 /*!
- *  @def    HEAPSMM_MODULEID
  *  @brief  Unique module ID.
  */
 #define HEAPSMM_MODULEID      (0x5711)
 
 /*!
- *  @def    SMM_STATUSCODEBASE
  *  @brief  Error code base for SMM.
  */
 #define HEAPSMM_STATUSCODEBASE      (HEAPSMM_MODULEID << 12u)
 
 /*!
- *  @def    SMM_MAKE_FAILURE
  *  @brief  Macro to make error code.
  */
 #define HEAPSMM_MAKE_FAILURE(x)    ((Int)(  0x80000000                         \
@@ -99,61 +96,51 @@ extern "C" {
                                           + (x))))
 
 /*!
- *  @def    HEAPSMM_MAKE_SUCCESS
  *  @brief  Macro to make success code.
  */
 #define HEAPSMM_MAKE_SUCCESS(x)    (HEAPSMM_STATUSCODEBASE + (x))
 
 /*!
- *  @def    HEAPSMM_E_INVALIDARG
  *  @brief  Argument passed to a function is invalid.
  */
 #define HEAPSMM_E_INVALIDARG       HEAPSMM_MAKE_FAILURE(1)
 
 /*!
- *  @def    HEAPSMM_E_MEMORY
  *  @brief  Memory allocation failed.
  */
 #define HEAPSMM_E_MEMORY           HEAPSMM_MAKE_FAILURE(2)
 
 /*!
- *  @def    HEAPSMM_E_BUSY
  *  @brief  the name is already registered or not.
  */
 #define HEAPSMM_E_BUSY             HEAPSMM_MAKE_FAILURE(3)
 
 /*!
- *  @def    HEAPSMM_E_FAIL
  *  @brief  Generic failure.
  */
 #define HEAPSMM_E_FAIL             HEAPSMM_MAKE_FAILURE(4)
 
 /*!
- *  @def    HEAPSMM_E_NOTFOUND
  *  @brief  name not found in the SharedRegion.
  */
 #define HEAPSMM_E_NOTFOUND         HEAPSMM_MAKE_FAILURE(4)
 
 /*!
- *  @def    HEAPSMM_E_ALREADYEXIST
  *  @brief  Entry already exists.
  */
 #define HEAPSMM_E_ALREADYEXIST     HEAPSMM_MAKE_FAILURE(5)
 
 /*!
- *  @def    HEAPSMM_E_INVALIDSTATE
  *  @brief  Module is in invalid state.
  */
 #define HEAPSMM_E_INVALIDSTATE     HEAPSMM_MAKE_FAILURE(6)
 
 /*!
- *  @def    HEAPHEAPSMM_E_OVERLAP
  *  @brief  Entries overlaps.
  */
 #define HEAPSMM_E_OVERLAP          HEAPSMM_MAKE_FAILURE(7)
 
 /*!
- *  @def    HEAPSMM_SUCCESS
  *  @brief  Operation successful.
  */
 #define HEAPSMM_SUCCESS            HEAPSMM_MAKE_SUCCESS(0)

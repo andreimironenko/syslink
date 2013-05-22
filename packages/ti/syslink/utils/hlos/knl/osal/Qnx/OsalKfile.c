@@ -83,14 +83,9 @@ typedef struct OsalKfile_Object_tag {
  *  APIs
  * =============================================================================
  */
-/*!
- *  @brief      Opens the specified file and returns the file object.
- *
- *  @param      fileName    The file to be operated upon.
- *  @param      fileMode    Mode with which the file will be operated.
- *  @param      fileHandle  Return parameter: The file object.
- *
- *  @sa         OsalKfile_close, Memory_alloc
+
+/*
+ * ======== OsalKfile_open ========
  */
 Int
 OsalKfile_open (String             fileName,
@@ -209,12 +204,8 @@ OsalKfile_open (String             fileName,
     return status;
 }
 
-/*!
- *  @brief      Closes the file represented by the specified file handle.
- *
- *  @param      fileHandle  File handle
- *
- *  @sa         OsalKfile_open, Memory_free
+/*
+ * ======== OsalKfile_close ========
  */
 Int
 OsalKfile_close (OsalKfile_Handle * fileHandle)
@@ -264,25 +255,12 @@ OsalKfile_close (OsalKfile_Handle * fileHandle)
     return status;
 }
 
-/*!
- *  @brief      Reads the block of data from current position in the file.
- *
- *              Reads a specified number of items of specified size
- *              bytes from file to a buffer.
- *
- *  @param      fileHandle  File handle
- *  @param      buffer      Working buffer which will be populated with the read
- *                          data.
- *  @param      size        Size to be read from the file handle.
- *  @param      count       Number of the size elements to be read.
- *
- *  @sa         OsalKfile_seek, OsalKfile_tell
+
+/*
+ * ======== OsalKfile_read ========
  */
-Int
-OsalKfile_read (OsalKfile_Handle fileHandle,
-                Char *           buffer,
-                UInt32           size,
-                UInt32           count)
+Int OsalKfile_read(OsalKfile_Handle fileHandle, Char *buffer, UInt32 size,
+        UInt32 count, UInt32 *numBytes)
 {
     Int                 status      = OSALKFILE_SUCCESS;
     UInt32              bytesRead   = 0;
@@ -295,98 +273,77 @@ OsalKfile_read (OsalKfile_Handle fileHandle,
     GT_assert (curTrace, (buffer != NULL));
     GT_assert (curTrace, (size != 0));
     GT_assert (curTrace, (count != 0));
+    GT_assert (curTrace, (numBytes != NULL));
+
+    /* initialize numBytes to 0 in case we return failure early */
+    if (numBytes != NULL) {
+        *numBytes = bytesRead;
+    }
 
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     if (fileHandle == NULL) {
-        /*! @retval OSALKFILE_E_INVALIDARG NULL provided for argument
-                                           fileHandle. */
         status = OSALKFILE_E_INVALIDARG;
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "OsalKfile_read",
-                             status,
-                             "NULL provided for argument fileHandle");
+        GT_setFailureReason(curTrace, GT_4CLASS, "OsalKfile_read", status,
+                "NULL provided for argument fileHandle");
     }
     else if (buffer == NULL) {
-        /*! @retval OSALKFILE_E_INVALIDARG NULL provided for argument buffer. */
         status = OSALKFILE_E_INVALIDARG;
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "OsalKfile_read",
-                             status,
-                             "NULL provided for argument buffer.");
+        GT_setFailureReason(curTrace, GT_4CLASS, "OsalKfile_read", status,
+                "NULL provided for argument buffer.");
     }
     else if (size == 0) {
-        /*! @retval OSALKFILE_E_INVALIDARG Zero provided for size argument. */
         status = OSALKFILE_E_INVALIDARG;
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "OsalKfile_read",
-                             status,
-                             "Zero provided for size argument.");
+        GT_setFailureReason(curTrace, GT_4CLASS, "OsalKfile_read", status,
+                "Zero provided for size argument.");
     }
     else if (count == 0) {
-        /*! @retval OSALKFILE_E_INVALIDARG Zero provided for count argument. */
         status = OSALKFILE_E_INVALIDARG;
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "OsalKfile_read",
-                             status,
-                             "Zero provided for count argument.");
+        GT_setFailureReason(curTrace, GT_4CLASS, "OsalKfile_read", status,
+                "Zero provided for count argument.");
+    }
+    else if (numBytes == NULL) {
+        status = OSALKFILE_E_INVALIDARG;
+        GT_setFailureReason(curTrace, GT_4CLASS, "OsalKfile_read", status,
+                "NULL provided for numBytes argument.");
     }
     else {
 #endif /* #if !defined(SYSLINK_BUILD_OPTIMIZE) */
         fileObject = (OsalKfile_Object*) fileHandle;
         if ((fileObject->curPos + (size * count)) > fileObject->size) {
-            /*! @retval OSALKFILE_E_OUTOFRANGE Specified operation goes out of
-                                               range of the file. */
-            status = OSALKFILE_E_OUTOFRANGE ;
-            GT_setFailureReason (curTrace,
-                          GT_4CLASS,
-                          "OsalKfile_read",
-                          status,
-                          "Specified operation goes out of range of the file.");
+            status = OSALKFILE_E_OUTOFRANGE;
+            GT_setFailureReason(curTrace, GT_4CLASS, "OsalKfile_read", status,
+                    "Specified operation goes out of range of the file.");
         }
         else {
             /* read from file */
-            bytesRead = read (fileObject->fileDesc,
-                                                buffer,
-                                                (size * count));
+            bytesRead = read(fileObject->fileDesc, buffer, (size * count));
+
+            *numBytes = bytesRead;
+
             if (bytesRead >= 0) {
                 fileObject->curPos += bytesRead;
                 GT_assert (curTrace, ((bytesRead / size) == (UInt32) count));
             }
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
             else {
-                /*! @retval OSALKFILE_E_FILEREAD Failed to read from the file */
                 status = OSALKFILE_E_FILEREAD;
-                GT_setFailureReason (curTrace,
-                                     GT_4CLASS,
-                                     "OsalKfile_read",
-                                     status,
-                                     "Failed to read from the file.");
+                GT_setFailureReason(curTrace, GT_4CLASS, "OsalKfile_read",
+                        status, "Failed to read from the file.");
             }
-#endif /* #if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
         }
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     }
-#endif /* #if !defined(SYSLINK_BUILD_OPTIMIZE) */
+#endif
 
-    GT_1trace (curTrace, GT_LEAVE, "OsalKfile_read", status);
+    GT_1trace(curTrace, GT_LEAVE, "OsalKfile_read", status);
 
-    /*! @retval OSALKFILE_SUCCESS Operation successfully completed. */
-    return status;
+    return (status);
 }
 
 
-/*!
- *  @brief      Repositions the file pointer according to specified arguments.
- *
- *  @param      Kernel file handle.
- *  @param      offset position from where to begin the seek.
- *  @param      pos start, end or any random location to begin seek.
- *
- *  @sa         OsalKfile_read, OsalKfile_tell
+/*
+ * ======== OsalKfile_seek ========
  */
 Int
 OsalKfile_seek (OsalKfile_Handle fileHandle,
@@ -503,13 +460,9 @@ OsalKfile_seek (OsalKfile_Handle fileHandle,
     return status;
 }
 
-/*!
- *  @brief      Returns the current file pointer position for the specified
- *              file handle.
- *
- *  @param      fileHandle  Kernel file handle.
- *
- *  @sa         OsalKfile_read, OsalKfile_seek
+
+/*
+ * ======== OsalKfile_tell ========
  */
 UInt32
 OsalKfile_tell (OsalKfile_Handle fileHandle)

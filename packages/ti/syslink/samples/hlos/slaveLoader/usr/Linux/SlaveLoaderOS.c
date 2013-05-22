@@ -266,4 +266,7 @@ static Void SlaveLoader_printUsageInfo (Void)
                  " argument is 'startup', 'load' or 'all'\n");
     Osal_printf ("Note: 'list' prints the state of all slave cores\n");
     Osal_printf ("Note: 'list map' also prints the memory map tables\n");
+    Osal_printf ("Note: [map file] optionally maps virt/phys memory when needed\n");
+    Osal_printf ("Note: [--args <core args>] optionally passes arguments to slave core\n");
+
 }

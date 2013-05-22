@@ -55,13 +55,9 @@
 #define _TRANSPORTSETUPPROXY_H_
 
 
-/* Module headers */
-#include "TransportShmSetup.h"
-
-
 #if defined (__cplusplus)
 extern "C" {
-#endif /* defined (__cplusplus) */
+#endif
 
 
 /* =============================================================================
@@ -69,29 +65,19 @@ extern "C" {
  * =============================================================================
  */
 #if defined (SYSLINK_TRANSPORT_SHMNOTIFY)
-#include <TransportShmNotifySetupProxy.h>
+#include "TransportShmNotifySetupProxy.h"
 #elif defined (SYSLINK_TRANSPORT_SHMCIRC)
-#include <TransportShmCircSetupProxy.h>
-#else /* if defined (SYSLINK_TRANSPORT_SHMNOTIFY) */
-/* Defaults to be used */
-
-/* Function that will be called in MessageQ_attach */
-#define MessageQ_SetupTransportProxy_attach(remoteProcId, sharedAddr) TransportShmSetup_attach(remoteProcId, sharedAddr)
-
-/* Function that will be called in MessageQ_detach */
-#define MessageQ_SetupTransportProxy_detach(remoteProcId) TransportShmSetup_detach(remoteProcId)
-
-/* Shared memory req function */
-#define MessageQ_SetupTransportProxy_sharedMemReq(sharedAddr) TransportShmSetup_sharedMemReq(sharedAddr)
-
-/* isRegistered function */
-#define MessageQ_SetupTransportProxy_isRegistered(remoteProcId) TransportShmSetup_isRegistered(remoteProcId)
-#endif /* if defined (SYSLINK_TRANSPORT_SHMNOTIFY) */
+#include "TransportShmCircSetupProxy.h"
+#elif defined (SYSLINK_TRANSPORT_SHM)
+#include "TransportShmSetupProxy.h"
+#else
+#error No MessageQ transport configured
+#endif
 
 
 #if defined (__cplusplus)
 }
-#endif /* defined (__cplusplus) */
+#endif
 
 
-#endif  /* !defined (_TRANSPORTSETUPPROXY_H_) */
+#endif

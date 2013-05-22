@@ -1,8 +1,7 @@
 /** 
  *  @file   ClientNotifyMgr_errBase.h
  *
- *  @brief      Header file that defines status codes for rtos component
- *              of ClientNotifyMgr
+ *  @brief      Header file that defines status codes for ClientNotifyMgr
  *
  *
  */
@@ -58,24 +57,20 @@ extern "C" {
 #endif
 
 /*!
- *  @def    ClientNotifyMgr_MODULEID
  *  @brief  Module ID for ClientNotifyMgr.
  */
 #define ClientNotifyMgr_MODULEID                    (0xbe91)
 
 /*!
- *  @def    ClientNotifyMgr_S_ALREADYDESTROYED
  *  @brief  Indicates module has been already destroyed.
  */
 #define ClientNotifyMgr_S_ALREADYDESTROYED           2
 /*!
- *  @def    ClientNotifyMgr_S_ALREADYSETUP
  *  @brief  Indicates module is already setup.
  */
 #define ClientNotifyMgr_S_ALREADYSETUP               1
 
 /*!
- *  @def    ClientNotifyMgr_SUCCESS
  *  @brief  Operation successful.
  */
 #define ClientNotifyMgr_S_SUCCESS                    0
@@ -120,6 +115,3 @@ extern "C" {
 #endif
 
 #endif
-
-
-

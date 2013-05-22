@@ -131,6 +131,9 @@
 #include <ti/syslink/inc/_Ipc.h>
 #include <ti/syslink/inc/knl/IpcKnl.h>
 
+/* ProcMgr friend function */
+extern ProcMgr_Handle _ProcMgr_getHandle(UInt16 procId);
+
 
 /** ============================================================================
  *  Macros.
@@ -144,11 +147,17 @@
  */
 #define SLAVE_CONFIG_TAG            0xDADA0000
 
-/* Defines used for timeout value for start/stopCallback */
-#define TIMEOUT_LOOPCNT             1000
-#define TIMEOUT_SLEEPTIME           10
-#define ATTACH_LOOPCNT              5000000
-#define ATTACH_SLEEPTIME            1
+/* Defines used for timeout value for start/stopCallback. Note that
+ * the loop iterates LOOPCNT times but sleeps for SLEEPTIME only once
+ * every 4096 iterations. Increase the DETACH_LOOPCNT if the remote
+ * processor needs more time to shutdown.
+ */
+#define ATTACH_LOOPCNT          0x1388000   /* total sleep time = 5 sec */
+#define ATTACH_SLEEPTIME        1           /* msec */
+#define DETACH_LOOPCNT          0x2BC000    /* total sleep time = 0.7 sec */
+#define DETACH_SLEEPTIME        1           /* msec */
+#define CFG_LOOPCNT             40          /* total sleep time = 0.4 sec */
+#define CFG_SLEEPTIME           10          /* msec */
 
 /*!
  *  @brief  Interrupt ID of physical interrupt handled by the Notify driver to
@@ -638,7 +647,6 @@ Platform_overrideConfig (Platform_Config * config)
 
 /*!
  *  @brief      Function to setup platform.
- *              TBD: logic would change completely in the final system.
  */
 Int32
 Platform_setup (void)
@@ -1197,8 +1205,6 @@ Platform_setup (void)
 
 /*!
  *  @brief      Function to destroy the System.
- *
- *  @sa         Platform_setup
  */
 Int32
 Platform_destroy (void)
@@ -1753,7 +1759,6 @@ typedef union _Platform_setup_Local {
 
 /*!
  *  @brief      Function to setup platform.
- *              TBD: logic would change completely in the final system.
  */
 Int32
 _Platform_setup (void)
@@ -1889,7 +1894,6 @@ ret:
 
 /*!
  *  @brief      Function to setup platform.
- *              TBD: logic would change completely in the final system.
  */
 Int32
 _Platform_destroy (void)
@@ -1998,10 +2002,8 @@ _Platform_destroy (void)
 }
 
 
-/*!
- *  @brief      Function called by ProcMgr when slave is in loaded state.
- *
- *  @param      arg   Registered argument.
+/*
+ * ======== Platform_loadCallback ========
  */
 Int32 Platform_loadCallback(UInt16 procId, Ptr arg)
 {
@@ -2018,8 +2020,7 @@ Int32 Platform_loadCallback(UInt16 procId, Ptr arg)
     UInt32                  fileId;
     Char                    str[64];
 
-    GT_2trace(curTrace, GT_ENTER,
-        "Platform_loadCallback: prodId=%d, arg=0x%08x", procId, arg);
+    GT_2trace(curTrace, GT_ENTER, "Platform_loadCallback", procId, arg);
 
     handle = (Platform_Handle)&Platform_objects[procId];
 
@@ -2242,24 +2243,20 @@ leave:
             handle->slaveSRCfg = NULL;
         }
     }
-    GT_1trace(curTrace, GT_LEAVE, "Platform_loadCallback: [0x%08x]", status);
+    GT_1trace(curTrace, GT_LEAVE, "Platform_loadCallback", status);
 
     return(status);
 }
 EXPORT_SYMBOL(Platform_loadCallback);
 
 
-/*!
- *  @brief      Function called by ProcMgr when slave is in started state.
- *              In case of self boot mode, slave and host both has to create
- *              the notifyDriver outside of SysMgr context. Since an event is
- *              sent to slave to indicate that HOST has done initialization on
- *              its side and it is safe for slave to do the rest of
- *              initialization.
- *              TBD: logic would change completely in the final system.
- *              TBD: update other slave about this slave's state change.
+/*
+ * ======== Platform_startCallback ========
  *
- *  @param      arg   Registered argument.
+ * In case of self boot mode, slave and host both have to create the
+ * notifyDriver outside of SysMgr context. Since an event is sent to slave
+ * to indicate that HOST has done initialization on its side and it is safe
+ * for slave to do the rest of initialization.
  */
 Int32
 Platform_startCallback (UInt16 procId, Ptr arg)
@@ -2297,16 +2294,16 @@ Platform_startCallback (UInt16 procId, Ptr arg)
     /* Get shared region max numEntries from Slave */
     do {
         if (startTimeout > 0) {
-            OsalThread_sleep(TIMEOUT_SLEEPTIME);
+            OsalThread_sleep(CFG_SLEEPTIME);
         }
 
         status = Ipc_readConfig(procId, SLAVE_CONFIG_TAG,
                 (Ptr)&slaveModuleConfig, sizeof(Syslink_SlaveModuleConfig));
 
-    } while ((status == Ipc_E_FAIL) && (++startTimeout < TIMEOUT_LOOPCNT));
+    } while ((status == Ipc_E_FAIL) && (++startTimeout < CFG_LOOPCNT));
 
     /* Check timeout value */
-    if (startTimeout >= TIMEOUT_LOOPCNT) {
+    if (startTimeout >= CFG_LOOPCNT) {
         status = Platform_E_FAIL;
         GT_setFailureReason(curTrace, GT_4CLASS, "Platform_startCallback",
             status, "Ipc_readConfig timeout");
@@ -2354,11 +2351,8 @@ end:
 /* TBD: since application has to call this API for now */
 EXPORT_SYMBOL(Platform_startCallback);
 
-/*!
- *  @brief      Function called by ProcMgr when slave is in stopped state.
- *              TBD: logic would change completely in the final system.
- *
- *  @param      arg   Registered argument.
+/*
+ * ======== Platform_stopCallback ========
  */
 Int32 Platform_stopCallback(UInt16 procId, Ptr arg)
 {
@@ -2383,8 +2377,7 @@ Int32 Platform_stopCallback(UInt16 procId, Ptr arg)
     UnmapInfo *             uiAry = NULL;
     ProcMgr_State           procState;
 
-    GT_2trace(curTrace, GT_ENTER,
-        "Platform_stopCallback: procId=%d, arg=0x%08x", procId, arg);
+    GT_2trace(curTrace, GT_ENTER, "Platform_stopCallback", procId, arg);
 
     handle = (Platform_Handle)&Platform_objects[procId];
 
@@ -2468,15 +2461,15 @@ Int32 Platform_stopCallback(UInt16 procId, Ptr arg)
     detachTimeout = 0;
 
     do {
-        if (detachTimeout > 0) {
-            OsalThread_sleep(TIMEOUT_SLEEPTIME);
-        }
-
+        detachTimeout++;
         status = Ipc_detach(procId);
 
-    } while ((status < 0) && (++detachTimeout < TIMEOUT_LOOPCNT));
+        if ((status < 0) && ((detachTimeout & 0xFFF) == 0)) {
+            OsalThread_sleep(DETACH_SLEEPTIME);
+        }
+    } while ((status < 0) && (detachTimeout < DETACH_LOOPCNT));
 
-    if (detachTimeout >= TIMEOUT_LOOPCNT) {
+    if (detachTimeout >= DETACH_LOOPCNT) {
         GT_setFailureReason(curTrace, GT_4CLASS, "Platform_stopCallback",
             status, "Ipc_detach timeout");
         /* don't exit, keep going */
@@ -2492,19 +2485,19 @@ Int32 Platform_stopCallback(UInt16 procId, Ptr arg)
 
         do {
             if (detachTimeout > 0) {
-                OsalThread_sleep(TIMEOUT_SLEEPTIME);
+                OsalThread_sleep(CFG_SLEEPTIME);
             }
 
             /* read sr0MemorySetup */
             numBytes = sizeof(Platform_SlaveConfig);
 
             status = _Platform_readSlaveMemory(procId, start,
-                &handle->slaveCfg, &numBytes);
+                    &handle->slaveCfg, &numBytes);
 
         } while ((handle->slaveCfg.sr0MemorySetup == 1)
-                  && (++detachTimeout < TIMEOUT_LOOPCNT));
+                  && (++detachTimeout < CFG_LOOPCNT));
 
-        if (detachTimeout >= TIMEOUT_LOOPCNT) {
+        if (detachTimeout >= CFG_LOOPCNT) {
             status = Platform_E_FAIL;
             GT_setFailureReason(curTrace, GT_4CLASS, "Platform_stopCallback",
                 status, "Ipc_stop timeout - Ipc_stop not called by slave?");
@@ -2550,7 +2543,7 @@ leave:
         uiAry = NULL;
     }
 
-    GT_1trace(curTrace, GT_LEAVE, "Platform_stopCallback: [0x%08x]", status);
+    GT_1trace(curTrace, GT_LEAVE, "Platform_stopCallback", status);
 
     return(status);
 }
@@ -2767,4 +2760,13 @@ Void Platform_terminateEventConfig(UInt16 procId, UInt32 *eventId,
 
     *eventId = Platform_module->termEvtAry[procId].eventId;
     *lineId = Platform_module->termEvtAry[procId].lineId;
+}
+
+Void Platform_terminateHandler(UInt16 procId)
+{
+    ProcMgr_Handle procHnd;
+
+    procHnd = _ProcMgr_getHandle(procId);
+    Platform_stopCallback(procId, NULL);
+    ProcMgr_stop(procHnd);
 }

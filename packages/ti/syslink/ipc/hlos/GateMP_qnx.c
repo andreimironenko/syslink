@@ -125,8 +125,6 @@
 #define RESERVED        ((UInt8)-1)
 
 /*!
- *  @var    GateMP_nameServer
- *
  *  @brief  Name of the reserved NameServer used for GateMP.
  */
 #define GateMP_NAMESERVER  "GateMP"
@@ -230,7 +228,6 @@ Void GateMP_setRegion0Reserved  (Ptr sharedAddr);
 Void GateMP_clearRegion0Reserved  (Void);
 Void GateMP_openRegion0Reserved (Ptr sharedAddr);
 Void GateMP_closeRegion0Reserved (Ptr sharedAddr);
-// Void GateMP_setDefaultRemote(GateMP_Handle handle); /* TODO remove */
 UInt GateMP_getFreeResource(UInt8 *inUse, Int num);
 GateMP_Handle _GateMP_create (const _GateMP_Params * params);
 
@@ -1498,7 +1495,7 @@ Int GateMP_openByAddr(Ptr sharedAddr, GateMP_Handle *handle)
         /* local gate */
         if (GETREMOTE(attrs->mask) == GateMP_RemoteProtect_NONE) {
             if (attrs->creatorProcId != MultiProc_self()) {
-                status = GateMP_E_LOCALGATE; /* TBD */
+                status = GateMP_E_LOCALGATE;
             }
             else {
                 key = Gate_enterSystem();
@@ -1958,7 +1955,6 @@ Void GateMP_openRegion0Reserved(Ptr sharedAddr)
         minAlign = SharedRegion_getCacheLineSize(0);
     }
 
-
     /* setup GateMP_Reserved fields */
     reserve = (GateMP_Reserved *)sharedAddr;
 
@@ -2016,20 +2012,9 @@ Void GateMP_closeRegion0Reserved(Ptr sharedAddr)
 
     GT_1trace (curTrace, GT_ENTER, "GateMP_closeRegion0Reserved", sharedAddr);
 
-
     GT_0trace (curTrace, GT_LEAVE, "GateMP_closeRegion0Reserved");
 }
 
-
-#if 0
-/*
- *  ======== GateMP_setDefaultRemote() ========
- */
-Void GateMP_setDefaultRemote(GateMP_Handle handle)
-{
-    GateMP_module->defaultGate = handle;
-}
-#endif
 
 /*
  *  ======== GateMP_start ========
@@ -2374,7 +2359,6 @@ Int GateMP_attach(UInt16 remoteProcId, Ptr sharedAddr)
 
             if (status >= 0) {
                 /* set the default GateMP for opener */
-//              GateMP_setDefaultRemote(defaultGate);
                 GateMP_module->defaultGate = defaultGate;
             }
 //      }
@@ -2400,7 +2384,6 @@ Int GateMP_detach(UInt16 remoteProcId, Ptr sharedAddr)
 
     key = IpcMemMgr_enterGate();
 
-
     GateMP_module->attachRefCount--;
     if (GateMP_module->attachRefCount == 0) {
 
@@ -2416,7 +2399,7 @@ Int GateMP_detach(UInt16 remoteProcId, Ptr sharedAddr)
             status = GateMP_close(&GateMP_module->defaultGate);
 
             /* set the default GateMP for opener */
-//          GateMP_setDefaultRemote(NULL);
+//          GateMP_module->defaultGate = NULL;
 //      }
     }
 

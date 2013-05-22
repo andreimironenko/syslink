@@ -53,6 +53,7 @@
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/utils/Gate.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/syslink/inc/SyslinkMemMgr_errBase.h>
@@ -114,7 +115,7 @@ SyslinkMemMgrDrv_open (Void)
         /* TBD: Protection for refCount. */
         SyslinkMemMgrDrv_refCount++;
 
-        SyslinkMemMgrDrv_handle = open (MEMMGR_DRVIER_NAME, O_SYNC | O_RDWR);
+        SyslinkMemMgrDrv_handle = Dev_pollOpen (MEMMGR_DRVIER_NAME, O_SYNC | O_RDWR);
         if (SyslinkMemMgrDrv_handle < 0) {
             perror ("SyslinkMemMgr driver open: ");
             /*! @retval MEMMGR_E_OSFAILURE Failed to open SyslinkMemMgr driver

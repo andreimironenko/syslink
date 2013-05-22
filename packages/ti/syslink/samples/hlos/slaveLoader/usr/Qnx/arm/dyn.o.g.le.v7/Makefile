@@ -55,6 +55,7 @@ EXTRA_LIBVPATH += \
 
 LIBS += syslink_common_g
 LIBS += syslink_g
+# LIBS += cache
 
 POST_BUILD = \
         $(CP_HOST) \

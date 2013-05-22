@@ -65,6 +65,26 @@
 
 pthread_mutex_t staticMutex = PTHREAD_RMUTEX_INITIALIZER;
 
+#else
+/* Check to see if RT kernel is being used and use mutex instead of disbaling irq */
+#include <linux/version.h>
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,33)
+#include <generated/autoconf.h>
+#else
+#include <linux/autoconf.h>
+#endif
+
+#if defined (CONFIG_PREEMPT_RT)
+
+#include <linux/mutex.h>
+
+DEFINE_MUTEX(staticMutex);
+struct task_struct *staticOwner = NULL;
+int                 staticDepth = 0;
+
+#endif /* defined (CONFIG_PREEMPT_RT) */
+
 #endif
 
 /* Structure defining internal object for the Gate Peterson.*/
@@ -78,7 +98,15 @@ IArg  Gate_enterSystem (void)
     unsigned long flags;
 
 #ifndef __QNX__
+#if defined (CONFIG_PREEMPT_RT)
+  if( staticOwner != get_current() ) {
+    mutex_lock_interruptible(&staticMutex);
+    staticOwner = get_current();
+  }
+  staticDepth++;
+#else
     local_irq_save (flags);
+#endif /*!defined (CONFIG_PREEMPT_RT) */
 #else
     int ret;
 
@@ -95,7 +123,15 @@ IArg  Gate_enterSystem (void)
 Void Gate_leaveSystem (IArg key)
 {
 #ifndef __QNX__
+#if defined (CONFIG_PREEMPT_RT)
+  staticDepth--;
+  if( !staticDepth ) {
+    staticOwner = NULL;
+    mutex_unlock(&staticMutex);
+  }
+#else
     local_irq_restore ((unsigned long) key);
+#endif /* !defined (CONFIG_PREEMPT_RT) */
 #else
     int ret;
 

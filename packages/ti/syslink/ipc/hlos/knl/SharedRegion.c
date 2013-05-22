@@ -53,7 +53,6 @@
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/String.h>
 #include <ti/syslink/utils/GateMutex.h>
-#include <ti/ipc/GateMP.h>
 #include <ti/syslink/utils/IGateProvider.h>
 #include <ti/ipc/HeapMemMP.h>
 #include <ti/ipc/MultiProc.h>
@@ -489,44 +488,45 @@ SharedRegion_start (Void)
          *  the owner creates a HeapMemMP and the other processors open it.
          */
         for (i = 0; i < SharedRegion_module->cfg.numEntries; i++) {
-            region = &(SharedRegion_module->regions [i]);
-            if (   (region->entry.isValid)
-                && (region->entry.ownerProcId == MultiProc_self ())
-                && (region->entry.createHeap)
-                && (region->heap == NULL)) {
-                /* get the next free address in each region */
-                sharedAddr = (Ptr)(  (UInt32) region->entry.base
+            region = &(SharedRegion_module->regions[i]);
+            if (region->entry.isValid) {
+                if ((region->entry.ownerProcId == MultiProc_self())
+                    && (region->entry.createHeap)
+                    && (region->heap == NULL)) {
+                    /* get the next free address in each region */
+                    sharedAddr = (Ptr)((UInt32)region->entry.base
                                                  + region->reservedSize);
 
-                /*  Create the HeapMemMP in the region. */
-                HeapMemMP_Params_init (&params);
-                params.sharedAddr = sharedAddr;
-                params.sharedBufSize = region->entry.len - region->reservedSize;
+                    /*  Create the HeapMemMP in the region. */
+                    HeapMemMP_Params_init(&params);
+                    params.sharedAddr = sharedAddr;
+                    params.sharedBufSize = region->entry.len - region->reservedSize;
 
-                /* Adjust to account for the size of HeapMemMP_Attrs */
-                params.sharedBufSize -= (  HeapMemMP_sharedMemReq (&params)
+                    /* Adjust to account for the size of HeapMemMP_Attrs */
+                    params.sharedBufSize -= (HeapMemMP_sharedMemReq(&params)
                                          - params.sharedBufSize);
-                heapHandle = HeapMemMP_create (&params);
+                    heapHandle = HeapMemMP_create(&params);
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-                if (heapHandle == NULL) {
-                    status = SharedRegion_E_FAIL;
-                    GT_setFailureReason (curTrace,
+                    if (heapHandle == NULL) {
+                        status = SharedRegion_E_FAIL;
+                        GT_setFailureReason (curTrace,
                                          GT_4CLASS,
                                          "SharedRegion_start",
                                          status,
                                          "Failed to create Heap in the Shared"
                                          " Region!");
-                    /* break from the loop on failure. */
-                    break;
-                }
-                else {
+                        /* break from the loop on failure. */
+                        break;
+                    }
+                    else {
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
-                    /* put heap handle into SharedRegion Module state */
-                    region->heap = heapHandle;
-                    SharedRegion_module->regionRefCount[i] += 1;
+                        /* put heap handle into SharedRegion Module state */
+                        region->heap = heapHandle;
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-                }
+                    }
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+                }
+                SharedRegion_module->regionRefCount[i] += 1;
             }
         }
 
@@ -582,27 +582,30 @@ SharedRegion_stop (Void)
          */
         for (i = 0; i < SharedRegion_module->cfg.numEntries; i++) {
             region = &(SharedRegion_module->regions[i]);
-            if (   (region->entry.isValid)
-                && (region->entry.ownerProcId == MultiProc_self ())
-                && (region->entry.createHeap)
-                && (region->heap != NULL)) {
-                /* Delete heap */
-                tmpStatus = HeapMemMP_delete ((HeapMemMP_Handle *)
+            if (region->entry.isValid) {
+                if ((region->entry.ownerProcId == MultiProc_self ())
+                    && (region->entry.createHeap)
+                    && (region->heap != NULL)) {
+                    /* Delete heap */
+                    tmpStatus = HeapMemMP_delete ((HeapMemMP_Handle *)
                                                         &(region->heap));
-                if ((tmpStatus < 0) && (status >= 0)) {
-                    status = SharedRegion_E_FAIL;
+                    if ((tmpStatus < 0) && (status >= 0)) {
+                        status = SharedRegion_E_FAIL;
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-                    GT_setFailureReason (curTrace,
+                        GT_setFailureReason (curTrace,
                                          GT_4CLASS,
                                          "SharedRegion_stop",
                                          status,
                                          "HeapMemMP_delete failed!");
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
+                    }
                 }
-            }
 
-            Memory_set (region, 0, sizeof (SharedRegion_Region));
-            SharedRegion_entryInit (&(region->entry));
+                Memory_set (region, 0, sizeof (SharedRegion_Region));
+                SharedRegion_entryInit (&(region->entry));
+
+                SharedRegion_module->regionRefCount[i] -= 1;
+            }
         }
 
         /* set the defaults for region 0  */
@@ -656,34 +659,33 @@ SharedRegion_attach (UInt16 remoteProcId)
          */
         for (i = 0; i < SharedRegion_module->cfg.numEntries; i++) {
             region = &(SharedRegion_module->regions [i]);
-            if ((region->entry.isValid) &&
-                (region->entry.ownerProcId != MultiProc_self ()) &&
-                (region->entry.ownerProcId != MultiProc_INVALIDID) &&
-                (region->entry.createHeap) &&
-                (region->heap == NULL)) {
-                /* SharedAddr should match creator's for each region */
-                sharedAddr = (Ptr) ((UInt32) region->entry.base +
+            if (region->entry.isValid) {
+                if ((region->entry.ownerProcId != MultiProc_self ()) &&
+                    (region->entry.ownerProcId != MultiProc_INVALIDID) &&
+                    (region->entry.createHeap) &&
+                    (region->heap == NULL)) {
+                    /* SharedAddr should match creator's for each region */
+                    sharedAddr = (Ptr) ((UInt32) region->entry.base +
                                                     region->reservedSize);
 
-                /* Heap should already be created so open by address */
-                status = HeapMemMP_openByAddr (sharedAddr,
+                    /* Heap should already be created so open by address */
+                    status = HeapMemMP_openByAddr (sharedAddr,
                                         (HeapMemMP_Handle *) &(region->heap));
-                if (status < 0) {
-                    status = SharedRegion_E_FAIL;
+                    if (status < 0) {
+                        status = SharedRegion_E_FAIL;
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-                    GT_setFailureReason (curTrace,
+                        GT_setFailureReason (curTrace,
                                          GT_4CLASS,
                                          "SharedRegion_attach",
                                          status,
                                          "HeapMemMP_openByAddr failed!");
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
-                    /* Break the loop on failure. */
-                    break;
+                        /* Break the loop on failure. */
+                        break;
+                    }
                 }
-                else {
-                    SharedRegion_module->regionRefCount[i] ++;
-                }
-            }
+                SharedRegion_module->regionRefCount[i] ++;
+			}
         }
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
     }
@@ -727,27 +729,25 @@ SharedRegion_detach (UInt16 remoteProcId)
          */
         for (i = 0; i < SharedRegion_module->cfg.numEntries; i++) {
             region = &(SharedRegion_module->regions [i]);
-            if ((region->entry.isValid) &&
-                (region->entry.ownerProcId != MultiProc_self ()) &&
-                (region->entry.ownerProcId != MultiProc_INVALIDID) &&
-                (region->entry.createHeap) &&
-                (region->heap != NULL)) {
-                /* Close the heap */
-                tmpStatus = HeapMemMP_close ((HeapMemMP_Handle *)
-                                                            &(region->heap));
-                if ((tmpStatus < 0) && (status >= 0)) {
-                    status = SharedRegion_E_FAIL;
+            if (region->entry.isValid) {
+                if ((region->entry.ownerProcId != MultiProc_self ()) &&
+                    (region->entry.ownerProcId != MultiProc_INVALIDID) &&
+                    (region->entry.createHeap) && (region->heap != NULL)) {
+	                /* Close the heap */
+	                tmpStatus = HeapMemMP_close ((HeapMemMP_Handle *)
+	                    &(region->heap));
+	                if ((tmpStatus < 0) && (status >= 0)) {
+	                    status = SharedRegion_E_FAIL;
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
-                    GT_setFailureReason (curTrace,
-                                         GT_4CLASS,
-                                         "SharedRegion_detach",
-                                         status,
-                                         "HeapMemMP_close failed!");
+	                    GT_setFailureReason (curTrace,
+	                                         GT_4CLASS,
+	                                         "SharedRegion_detach",
+	                                         status,
+	                                         "HeapMemMP_close failed!");
 #endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
-                }
-                else {
-                    SharedRegion_module->regionRefCount[i]--;
-                }
+	                }
+	            }
+	            SharedRegion_module->regionRefCount[i]--;
             }
         }
 #if !defined(SYSLINK_BUILD_OPTIMIZE)
@@ -1088,7 +1088,7 @@ SharedRegion_setEntry (UInt16                id,
                         }
                     }
                 }
-                if (region->heap) {
+                if (region->entry.isValid) {
                     SharedRegion_module->regionRefCount[id] ++;
                 }
             }
@@ -1153,7 +1153,9 @@ SharedRegion_clearEntry (UInt16 id)
         ownerProcId = region->entry.ownerProcId;
         heapmemPtr  = region->heap;
 
-        SharedRegion_module->regionRefCount[id] -= 1;
+        if (region->entry.isValid) {
+            SharedRegion_module->regionRefCount[id] -= 1;
+        }
 
         if (SharedRegion_module->regionRefCount[id] == 0) {
            /* Assert if region is 0.

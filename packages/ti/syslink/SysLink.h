@@ -174,7 +174,7 @@ typedef struct SysLink_MemoryMap_tag {
     UInt16                   numBlocks;
     /*!< Number of memory blocks in the memory map */
     SysLink_MemEntry_Block * memBlocks;
-    /*!< Poninter to entire system memory map */
+    /*!< Pointer to entire system memory map */
 } SysLink_MemoryMap;
 
 /** @endcond */
@@ -216,6 +216,26 @@ extern String SysLink_params;
  *
  *              This function must be called in every user process before making
  *              calls to any other SysLink APIs.
+ *
+ *  @remarks    On Linux, SysLink is composed of many underlying sub-modules,
+ *              each with its own entry in the /dev filesystem.  SysLink_setup()
+ *              (or, more precisely, other "setup" functions called by
+ *              SysLink_setup()) will open each of these /dev files.  Because
+ *              these /dev files are created by a user-level system process
+ *              named 'udev', a user's SysLink application can "race" against
+ *              'udev' and encounter the /dev 'open()' call before 'udev' has
+ *              had a chance to create the /dev file.  Typically, this
+ *              behavior happens when the SysLink user application is
+ *              executed immediately after SysLink's kernel module (syslink.ko)
+ *              is installed in the system with 'insmod' or 'modprobe'.
+ *
+ *              To accommodate the above potential race condition, each /dev
+ *              file 'open' is performed in a loop with a 1 ms sleep in between
+ *              each 'open' attempt.  The loop will occur a maximum of 100
+ *              times before reporting the failure to open the /dev file.
+ *              Since SysLink_setup() is of a 'void' return type, it can't
+ *              report this error back to the application, and instead it
+ *              prints failure messages to 'stderr'.
  *
  *  @sa         SysLink_destroy()
  */

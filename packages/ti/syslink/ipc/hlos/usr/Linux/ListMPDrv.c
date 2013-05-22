@@ -53,6 +53,7 @@
 
 /* OSAL & Utils headers */
 #include <ti/syslink/utils/Trace.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/syslink/inc/_ListMP.h>
@@ -111,7 +112,7 @@ ListMPDrv_open (Void)
     GT_0trace (curTrace, GT_ENTER, "ListMPDrv_open");
 
     if (ListMPDrv_refCount == 0) {
-        ListMPDrv_handle = open (LISTMP_DRIVER_NAME,
+        ListMPDrv_handle = Dev_pollOpen (LISTMP_DRIVER_NAME,
                                  O_SYNC | O_RDWR);
         if (ListMPDrv_handle < 0) {
             perror (LISTMP_DRIVER_NAME);

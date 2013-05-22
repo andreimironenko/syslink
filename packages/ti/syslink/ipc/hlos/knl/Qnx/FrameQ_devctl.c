@@ -97,6 +97,16 @@ int syslink_frameq_get_vnumfreeframes(resmgr_context_t *ctp, io_devctl_t *msg, s
 int syslink_frameq_reg_notifier(resmgr_context_t *ctp, io_devctl_t *msg, syslink_ocb_t *ocb);
 int syslink_frameq_unreg_notifier(resmgr_context_t *ctp, io_devctl_t *msg, syslink_ocb_t *ocb);
 
+/*!
+ *  @brief  Internal utility function to check if address is required
+ */
+static Bool _is_virt2phys_translationRequired(Ptr addr);
+
+/*!
+ *  @brief  Internal utility function to check if address is required
+ */
+static Bool _is_phys2virt_translationRequired(Ptr addr);
+
 /**
  * Handler for devctl() messages for frameQ module.
  *
@@ -510,12 +520,23 @@ int syslink_frameq_put(resmgr_context_t *ctp, io_devctl_t *msg, syslink_ocb_t *o
 
             frameBufInfo = (FrameQ_FrameBufInfo *)&(frame->frameBufInfo[0]);
 
-            for(i = 0; i < frame->numFrameBuffers; i++) {
-                addr = (Ptr)frameBufInfo[i].bufPtr;
-                virtPtr = Memory_translate(addr, Memory_XltFlags_Phys2Virt);
-                GT_assert(curTrace,(virtPtr != NULL));
-                frameBufInfo[i].bufPtr = (UInt32)virtPtr;
-            }
+            /* Convert frame address and frame buffer address in to knl virtual
+             * format only when frame-buffer shared region's createHeap is TRUE.
+             * Otherwise leave the addresses in the buffer-header as is,
+             * which means FrameQ_put function will not expect virtual
+             * frame-buffer memory addresses, and will
+             * convert pointers to Portable pointers in place accordingly.
+             */
+            if (_is_phys2virt_translationRequired((Ptr)frameBufInfo[0].bufPtr)){
+            
+	            for(i = 0; i < frame->numFrameBuffers; i++) {
+	                addr = (Ptr)frameBufInfo[i].bufPtr;
+	                virtPtr = Memory_translate(addr, Memory_XltFlags_Phys2Virt);
+	                GT_assert(curTrace,(virtPtr != NULL));
+	                frameBufInfo[i].bufPtr = (UInt32)virtPtr;
+	            }
+	        }
+	        
             out->apiStatus = FrameQ_put (cargs->args.put.handle, frame);
             GT_assert (curTrace, (out->apiStatus >= 0));
 
@@ -541,21 +562,24 @@ int syslink_frameq_putv(resmgr_context_t *ctp, io_devctl_t *msg, syslink_ocb_t *
 			filledQueueId = (UInt32*)(framePtr + cargs->args.putv.numFrames);
 
              for (i = 0; i < cargs->args.putv.numFrames; i++) {
-                        /* Convert frame address and frame buffer address in to knl
-                         			  * virtual format.
-                         			  */
-                        framePtr[i] = Memory_translate (framePtr[i],
-                                                  Memory_XltFlags_Phys2Virt);
-                        GT_assert(curTrace,(framePtr[i] != NULL));
-                        frameBufInfo = (FrameQ_FrameBufInfo *)
-                                                &(framePtr[i]->frameBufInfo[0]);
-                        for(j = 0; j < framePtr[i]->numFrameBuffers; j++) {
-                            addr = (Ptr)frameBufInfo[j].bufPtr;
-                            virtPtr = Memory_translate(addr,
-                                                   Memory_XltFlags_Phys2Virt);
-                            GT_assert(curTrace,(virtPtr != NULL));
-                            frameBufInfo[j].bufPtr = (UInt32)virtPtr;
-                        }
+                  /* Convert frame address and frame buffer address in to knl
+                   			  * virtual format.
+                   			  */
+                  framePtr[i] = Memory_translate (framePtr[i],
+                                            Memory_XltFlags_Phys2Virt);
+                  GT_assert(curTrace,(framePtr[i] != NULL));
+                  frameBufInfo = (FrameQ_FrameBufInfo *)
+                                          &(framePtr[i]->frameBufInfo[0]);
+                  if (_is_phys2virt_translationRequired(
+                           (Ptr)frameBufInfo[0].bufPtr)) {
+	                  for(j = 0; j < framePtr[i]->numFrameBuffers; j++) {
+	                      addr = (Ptr)frameBufInfo[j].bufPtr;
+	                      virtPtr = Memory_translate(addr,
+	                                Memory_XltFlags_Phys2Virt);
+	                      GT_assert(curTrace,(virtPtr != NULL));
+	                      frameBufInfo[j].bufPtr = (UInt32)virtPtr;
+	                  }
+	              }
              }
 
              out->apiStatus = FrameQ_putv (cargs->args.putv.handle,
@@ -589,13 +613,19 @@ int syslink_frameq_get(resmgr_context_t *ctp, io_devctl_t *msg, syslink_ocb_t *o
                 		  */
                 frameBufInfo = (FrameQ_FrameBufInfo *)
                                                       &(frame->frameBufInfo[0]);
-                for(j = 0; j < frame->numFrameBuffers; j++) {
-                    addr = (Ptr)frameBufInfo[j].bufPtr;
-                    phyPtr = Memory_translate(addr, Memory_XltFlags_Virt2Phys);
-                    GT_assert(curTrace,(phyPtr != NULL));
-                    frameBufInfo[j].bufPtr = (UInt32)phyPtr;
-                }
 
+                /* check to see if address translation is required (MK) */
+                if (_is_virt2phys_translationRequired(
+		                        (Ptr)frameBufInfo[0].bufPtr)) {
+                    /* translate frame buffer addresses when createHeap=true */
+	                for(j = 0; j < frame->numFrameBuffers; j++) {
+	                    addr = (Ptr)frameBufInfo[j].bufPtr;
+	                    phyPtr = Memory_translate(addr, Memory_XltFlags_Virt2Phys);
+	                    GT_assert(curTrace,(phyPtr != NULL));
+	                    frameBufInfo[j].bufPtr = (UInt32)phyPtr;
+	                }
+	            }
+                /* frame ptr is in the header, so always translate */
                 out->args.get.frame = Memory_translate(
                                                     frame,
                                                     Memory_XltFlags_Virt2Phys);
@@ -634,33 +664,37 @@ int syslink_frameq_getv(resmgr_context_t *ctp, io_devctl_t *msg, syslink_ocb_t *
 
             if ((out->apiStatus >= 0) && (cargs->args.getv.numFrames > 0)) {
 
-                      for (i = 0; i < cargs->args.getv.numFrames; i++) {
-                            /* Convert Frame and frame buffer address in frame
-                             			  * to physical address formatso that user space api
-                             			  * convert this physical address in to user space
-                             		 	  * virtual format.
-                             			  */
-                            frameBufInfo = (FrameQ_FrameBufInfo *)
-                                                &(framePtr[i]->frameBufInfo[0]);
+                for (i = 0; i < cargs->args.getv.numFrames; i++) {
+                    /* Convert Frame and frame buffer address in frame
+                     * to physical address formatso that user space api
+                     * convert this physical address in to user space
+                     * virtual format.
+                     */
+                    frameBufInfo = (FrameQ_FrameBufInfo *)
+                                          &(framePtr[i]->frameBufInfo[0]);
 
-                            for(j = 0; j < framePtr[i]->numFrameBuffers; j++) {
-                                addr = (Ptr)frameBufInfo[j].bufPtr;
-                                phyPtr = Memory_translate(
-                                                     addr,
-                                                     Memory_XltFlags_Virt2Phys);
-                                GT_assert(curTrace,(phyPtr != NULL));
-                                frameBufInfo[j].bufPtr = (UInt32)phyPtr;
-                            }
-
-                            framePtr[i] = Memory_translate(
-                                                     framePtr[i],
-                                                     Memory_XltFlags_Virt2Phys);
+                    /* check to see if address translation is required*/
+                    if (_is_virt2phys_translationRequired(
+                        (Ptr)frameBufInfo[0].bufPtr)) {
+                        for(j = 0; j < framePtr[i]->numFrameBuffers; j++) {
+                            addr = (Ptr)frameBufInfo[j].bufPtr;
+                            phyPtr = Memory_translate(
+                                                 addr,
+                                                 Memory_XltFlags_Virt2Phys);
+                            GT_assert(curTrace,(phyPtr != NULL));
+                            frameBufInfo[j].bufPtr = (UInt32)phyPtr;
                         }
-
-						SETIOV(&ctp->iov[1], framePtr, sizeof (UInt32) * cargs->args.getv.numFrames);
-
-                       	return _RESMGR_NPARTS(2);
                     }
+                    framePtr[i] = Memory_translate(
+                                           framePtr[i],
+                                           Memory_XltFlags_Virt2Phys);
+                }
+
+			    SETIOV(&ctp->iov[1], framePtr, sizeof (UInt32) * 
+				    cargs->args.getv.numFrames);
+
+                return _RESMGR_NPARTS(2);
+            }
 
 			return _RESMGR_NPARTS(1);
 }
@@ -838,3 +872,75 @@ int syslink_frameq_unreg_notifier(resmgr_context_t *ctp, io_devctl_t *msg, sysli
 			return (_RESMGR_PTR (ctp, &msg->o, sizeof (msg->o) + sizeof(FrameQDrv_CmdArgs)));
 }
 
+/*
+ *  Internal utility function:
+ *  NOTE:   Translate frame buffer pointers only when createHeap is TRUE.
+ *          otherwise do no buffer pointer translation,  expect Physical
+ *          addresses from the user-mode and leave them as-is, since they
+ *          are no longer mapped to Master Kernel Virtual.
+ *          This also means that Kernel APIs can not access the frame-buffer
+ *          and will only serve to convert them to Portable pointers where
+ *          necessary.
+ */
+static Bool _is_phys2virt_translationRequired(Ptr addr)
+{
+    UInt16              regionId;
+
+    /*  this should always obtain a valid region id for both
+     *  heap  or no-heap SR configuration.
+     */
+    regionId = _SharedRegion_getIdPhys(addr);
+
+    /*
+     * If frame buffer shared region has createHeap == FALSE
+     * then we will not convert virtual ptrs to physical.
+     * In this case virtual == physical.
+     */
+    if (SharedRegion_getHeap(regionId) == NULL) {
+        /*
+         * region has no heap => so the address is already Physical
+         * No translation is required.
+         */
+        return FALSE;
+
+    } else {
+        /*
+         * region has heap => so the address is virtual and it needs to
+         * to be translated virtual to physical.
+         */
+        return TRUE;
+    }
+ }
+
+/*
+ *  Internal utility function
+ */
+static Bool _is_virt2phys_translationRequired(Ptr addr)
+{
+    UInt16              regionId;
+    /*
+     * SharedRegion_getId()  should always obtain a valid region id whether
+     * Shared Region was created with or without a heap.
+     */
+    regionId = SharedRegion_getId(addr);
+
+    /*
+     * If frame buffer shared region has createHeap == FALSE
+     * then we will not convert virtual ptrs to physical.
+     * In this case virtual == physical.
+     */
+    if (SharedRegion_getHeap(regionId) == NULL) {
+        /*
+         * region has no heap => so the address is already Physical
+         * No translation is required.
+         */
+        return FALSE;
+
+    } else {
+        /*
+         * region has heap => so the address is virtual and it needs to
+         * to be translated virtual to physical.
+         */
+        return TRUE;
+    }
+}

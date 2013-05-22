@@ -51,3 +51,4 @@ CSRCS += $(SYSLINK_ROOT)/ti/syslink/utils/hlos/usr/Linux/MultiProcDrv.c
 CSRCS += $(SYSLINK_ROOT)/ti/syslink/utils/hlos/usr/Linux/SyslinkMemMgrDrv.c
 CSRCS += $(SYSLINK_ROOT)/ti/syslink/utils/hlos/usr/Linux/TraceDrv.c
 CSRCS += $(SYSLINK_ROOT)/ti/syslink/utils/hlos/usr/Linux/CacheDrv.c
+CSRCS += $(SYSLINK_ROOT)/ti/syslink/utils/hlos/usr/Linux/Dev.c

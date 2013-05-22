@@ -57,10 +57,12 @@
 #include <ti/syslink/Std.h>
 
 /* OSAL & Utils headers */
-#include <ti/syslink/utils/List.h>
 #include <ti/syslink/inc/knl/OsalDriver.h>
-#include <ti/syslink/utils/Trace.h>
+#include <ti/syslink/osal/OsalTypes.h>
+#include <ti/syslink/utils/List.h>
 #include <ti/syslink/utils/Memory.h>
+#include <ti/syslink/utils/ResTrack.h>
+#include <ti/syslink/utils/Trace.h>
 
 /* Linux specific header files */
 #include <linux/kernel.h>
@@ -68,6 +70,7 @@
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <asm/uaccess.h>
+#include <linux/pid.h>
 
 /* Module specific header files */
 #include <ti/syslink/inc/_NameServer.h>
@@ -111,6 +114,30 @@ EXPORT_SYMBOL(NameServerDrv_unregisterDriver);
  */
 #define NAMESERVER_DRV_MINOR_NUMBER 2
 
+typedef struct {
+    ResTrack_Handle     resTrack;
+} NameServerDrv_ModuleObject;
+
+typedef struct {
+    Ptr         handle;
+} NameServerDrv_CreateRes;
+
+typedef struct {
+    Ptr         handle;
+    String      name;
+    Int         len;
+    Ptr         entry;
+} NameServerDrv_AddRes;
+
+typedef struct {
+    List_Elem   elem;
+    UInt        cmd;
+    union {
+        NameServerDrv_CreateRes create;
+        NameServerDrv_AddRes    add;
+    } args;
+} NameServerDrv_Res;
+
 
 /** ============================================================================
  *  Forward declarations of internal functions
@@ -133,6 +160,11 @@ static long NameServerDrv_ioctl (struct file *  filp,
                                  unsigned int   cmd,
                                  unsigned long  args);
 
+static Void NameServerDrv_setup(Void);
+static Void NameServerDrv_destroy(Void);
+static Void NameServerDrv_releaseResources(Osal_Pid pid);
+static Bool NameServerDrv_resCmpFxn(Void *ptrA, Void *ptrB);
+static Int  NameServerDrv_cmd_delete(NameServer_Handle *handlePtr);
 
 #if defined (SYSLINK_MULTIPLE_MODULES)
 /*!
@@ -151,6 +183,10 @@ static void  __exit NameServerDrv_finalizeModule (void);
  *  Globals
  *  ============================================================================
  */
+
+NameServerDrv_ModuleObject NameServerDrv_state = {
+    .resTrack = NULL
+};
 
 /*!
  *  @brief  Function to invoke the APIs through ioctl.
@@ -202,48 +238,51 @@ static Ptr NameServerDrv_osalDrvHandle = NULL;
  *  Functions
  *  ============================================================================
  */
-/*!
- *  @brief  Register the NameServer with OsalDriver
+
+/*
+ *  ======== NameServerDrv_registerDriver ========
+ *
+ *  Register the NameServer with OsalDriver
  */
-Ptr
-NameServerDrv_registerDriver (Void)
+Ptr NameServerDrv_registerDriver(Void)
 {
     OsalDriver_Handle osalHandle;
 
-    GT_0trace (curTrace, GT_ENTER, "NameServerDrv_registerDriver");
+    GT_0trace(curTrace, GT_ENTER, "NameServerDrv_registerDriver");
 
-    osalHandle = OsalDriver_registerDriver ("NameServer",
-                                            &NameServerDrv_driverOps,
-                                            NAMESERVER_DRV_MINOR_NUMBER);
-#if !defined(SYSLINK_BUILD_OPTIMIZE)
+    /* setup the module */
+    NameServerDrv_setup();
+
+    osalHandle = OsalDriver_registerDriver("NameServer",
+            &NameServerDrv_driverOps, NAMESERVER_DRV_MINOR_NUMBER);
+
     if (osalHandle == NULL) {
-        GT_setFailureReason (curTrace,
-                             GT_4CLASS,
-                             "NameServerDrv_registerDriver",
-                             NameServer_E_INVALIDARG,
-                             "OsalDriver_registerDriver failed!");
+        GT_setFailureReason(curTrace, GT_4CLASS,
+                "NameServerDrv_registerDriver", NameServer_E_INVALIDARG,
+                "OsalDriver_registerDriver failed!");
     }
-#endif /* if !defined(SYSLINK_BUILD_OPTIMIZE) */
 
-    GT_1trace (curTrace, GT_LEAVE, "NameServerDrv_registerDriver", osalHandle);
+    GT_1trace(curTrace, GT_LEAVE, "NameServerDrv_registerDriver", osalHandle);
 
-    return (Ptr) osalHandle;
+    return((Ptr)osalHandle);
 }
 
-
-/*!
- *  @brief  Register the NameServer with OsalDriver
+/*
+ *  ======== NameServerDrv_unregisterDriver ========
+ *
+ *  Register the NameServer with OsalDriver
  */
-Void
-NameServerDrv_unregisterDriver (Ptr * drvHandle)
+Void NameServerDrv_unregisterDriver(Ptr* drvHandle)
 {
-    GT_1trace (curTrace, GT_ENTER, "NameServerDrv_unregisterDriver", drvHandle);
+    GT_1trace(curTrace, GT_ENTER, "NameServerDrv_unregisterDriver", drvHandle);
 
-    OsalDriver_unregisterDriver ((OsalDriver_Handle *) drvHandle);
+    OsalDriver_unregisterDriver((OsalDriver_Handle *)drvHandle);
 
-    GT_0trace (curTrace, GT_LEAVE, "NameServerDrv_unregisterDriver");
+    /* destroy the module */
+    NameServerDrv_destroy();
+
+    GT_0trace(curTrace, GT_LEAVE, "NameServerDrv_unregisterDriver");
 }
-
 
 /*!
  *  @brief  Linux specific function to open the driver.
@@ -259,91 +298,233 @@ NameServerDrv_open (struct inode * inode, struct file * filp)
     return 0;
 }
 
-/*!
- *  @brief  Linux specific function to close the driver.
+/*
+ *  ======== NameServerDrv_close ========
+ *
+ *  Linux specific function to close the driver.
  */
-int
-NameServerDrv_close (struct inode * inode, struct file * filp)
+int NameServerDrv_close(struct inode *inode, struct file *filp)
 {
-    return 0;
+    pid_t pid;
+
+    /* release resources abandoned by the process */
+    pid = pid_nr(filp->f_owner.pid);
+    NameServerDrv_releaseResources(pid);
+
+    return(0);
 }
 
-/*!
- *  @brief  Linux specific function to close the driver.
+/*
+ *  ======== NameServerDrv_ioctl ========
+ *
  */
-static
-long NameServerDrv_ioctl (struct file *  filp,
-                          unsigned int   cmd,
-                          unsigned long  args)
+static long NameServerDrv_ioctl(struct file *filp, unsigned int cmd,
+        unsigned long args)
 {
-    int                     osStatus = 0;
-    Int32                   status = NameServer_S_SUCCESS;
-    NameServerDrv_CmdArgs * cargs  = (NameServerDrv_CmdArgs *) args;
-    Int32                   ret;
+    int                         osStatus = 0;
+    Int32                       status = NameServer_S_SUCCESS;
+    Int32                       ret;
+    NameServerDrv_CmdArgs       cargs;
+    Osal_Pid                    pid;
 
-    GT_3trace (curTrace, GT_ENTER, "NameServerDrv_ioctl",
-               filp, cmd, args);
+    GT_3trace(curTrace, GT_ENTER, "NameServerDrv_ioctl", filp, cmd, args);
+
+    /* save the process id for resource tracking */
+    pid = pid_nr(filp->f_owner.pid);
+
+    /* copy the full args from user space */
+    ret = copy_from_user(&cargs, (Ptr)args, sizeof(NameServerDrv_CmdArgs));
+    GT_assert(curTrace, (ret == 0));
 
     switch (cmd) {
-        case CMD_NAMESERVER_ADD:
-        {
-            String name;
-            Ptr    buf;
-            Ptr    entry;
+        case CMD_NAMESERVER_ADD: {
+            NameServerDrv_Res * res = NULL;
+            Ptr                 buf;
 
-            /* Allocate memory for the name */
-            name = Memory_alloc (NULL, cargs->args.add.nameLen, 0, NULL);
-            GT_assert (curTrace, (name != NULL));
-            /* Copy the name */
-            ret = copy_from_user (name,
-                                  cargs->args.add.name,
-                                  cargs->args.add.nameLen);
-            GT_assert (curTrace, (ret == 0));
+            /* allocate resource tracker object */
+            res = Memory_alloc(NULL, sizeof(NameServerDrv_Res), 0, NULL);
 
-            /* Allocate memory for the buf */
-            buf = Memory_alloc (NULL, cargs->args.add.len, 0, NULL);
-            GT_assert (curTrace, (buf != NULL));
-            /* Copy the value */
-            ret = copy_from_user (buf,
-                                  cargs->args.add.buf,
-                                  cargs->args.add.len);
-            GT_assert (curTrace, (ret == 0));
+            if (res == NULL) {
+                status = NameServer_E_MEMORY;
+                GT_setFailureReason(curTrace, GT_4CLASS,
+                        "NameServerDrv_ioctl", status, "out of memory");
+            }
 
-            entry = NameServer_add (cargs->args.add.handle,
-                                    name,
-                                    buf,
-                                    cargs->args.add.len);
-            GT_assert (curTrace, (entry != NULL));
-            cargs->args.add.entry = entry;
+            /* allocate memory for the name */
+            if (status == NameServer_S_SUCCESS) {
+                res->args.add.len = cargs.args.add.nameLen;
+                res->args.add.name = Memory_alloc(NULL,
+                        cargs.args.add.nameLen, 0, NULL);
 
-            /* free the allocated memory */
-            Memory_free (NULL, name, cargs->args.add.nameLen);
-            Memory_free (NULL, buf,  cargs->args.add.len);
+                if (res->args.add.name == NULL) {
+                    status = NameServer_E_MEMORY;
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status, "out of memory");
+                }
+            }
+
+            /* copy the name from user memory */
+            if (status == NameServer_S_SUCCESS) {
+                status = copy_from_user(res->args.add.name,
+                        cargs.args.add.name, cargs.args.add.nameLen);
+
+                if (status != 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "copy_from_user failed");
+                    status = NameServer_E_OSFAILURE;
+                    osStatus = -EFAULT;
+                }
+            }
+
+            /* allocate memory for the buf */
+            if (status == NameServer_S_SUCCESS) {
+                buf = Memory_alloc(NULL, cargs.args.add.len, 0, NULL);
+
+                if (buf == NULL) {
+                    status = NameServer_E_MEMORY;
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status, "out of memory");
+                }
+            }
+
+            /* copy the value from user buf */
+            if (status == NameServer_S_SUCCESS) {
+                status = copy_from_user(buf, cargs.args.add.buf,
+                        cargs.args.add.len);
+
+                if (status != 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "copy_from_user failed");
+                    status = NameServer_E_OSFAILURE;
+                    osStatus = -EFAULT;
+                }
+            }
+
+            /* invoke the module api */
+            if (status == NameServer_S_SUCCESS) {
+                cargs.args.add.entry = NameServer_add(cargs.args.add.handle,
+                        res->args.add.name, buf, cargs.args.add.len);
+
+                if (cargs.args.addUInt32.entry == NULL) {
+                    status = NameServer_E_FAIL;
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "NameServer_addUInt32 failed");
+                }
+            }
+
+            /* track the resource by process id */
+            if (status == NameServer_S_SUCCESS) {
+                Int rstat;
+
+                res->cmd = CMD_NAMESERVER_ADD; /* use this command for both */
+                res->args.add.handle = cargs.args.add.handle;
+                res->args.add.entry = cargs.args.add.entry;
+
+                rstat = ResTrack_push(NameServerDrv_state.resTrack, pid,
+                        (List_Elem *)res);
+
+                GT_assert(curTrace, (rstat >= 0));
+            }
+
+            /* don't need the buf memory anymore */
+            if (buf != NULL) {
+                Memory_free(NULL, buf, cargs.args.add.len);
+            }
+
+            /* failure cleanup */
+            if (status < 0) {
+                if ((res != NULL) && (res->args.add.name != NULL)) {
+                    Memory_free(NULL, res->args.add.name,
+                            cargs.args.add.nameLen);
+                }
+                if (res != NULL) {
+                    Memory_free(NULL, res, sizeof(NameServerDrv_Res));
+                }
+            }
         }
         break;
 
-        case CMD_NAMESERVER_ADDUINT32:
-        {
-            String name;
-            Ptr    entry;
+        case CMD_NAMESERVER_ADDUINT32: {
+            NameServerDrv_Res * res = NULL;
 
-            /* Allocate memory for the name */
-            name = Memory_alloc (NULL, cargs->args.addUInt32.nameLen, 0, NULL);
-            GT_assert (curTrace, (name != NULL));
-            /* Copy the name */
-            ret = copy_from_user (name,
-                                  cargs->args.addUInt32.name,
-                                  cargs->args.addUInt32.nameLen);
-            GT_assert (curTrace, (ret == 0));
+            /* allocate resource tracker object */
+            res = Memory_alloc(NULL, sizeof(NameServerDrv_Res), 0, NULL);
 
-            entry = NameServer_addUInt32 (cargs->args.addUInt32.handle,
-                                          name,
-                                          cargs->args.addUInt32.value);
-            GT_assert (curTrace, (entry != NULL));
-            cargs->args.addUInt32.entry = entry;
+            if (res == NULL) {
+                status = NameServer_E_MEMORY;
+                GT_setFailureReason(curTrace, GT_4CLASS,
+                        "NameServerDrv_ioctl", status, "out of memory");
+            }
 
-            /* free the allocated memory */
-            Memory_free (NULL, name, cargs->args.addUInt32.nameLen);
+            /* allocate memory for the name */
+            if (status == NameServer_S_SUCCESS) {
+                res->args.add.len = cargs.args.addUInt32.nameLen;
+                res->args.add.name = Memory_alloc(NULL,
+                        cargs.args.addUInt32.nameLen, 0, NULL);
+
+                if (res->args.add.name == NULL) {
+                    status = NameServer_E_MEMORY;
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status, "out of memory");
+                }
+            }
+
+            /* copy the name from user memory */
+            if (status == NameServer_S_SUCCESS) {
+                status = copy_from_user(res->args.add.name,
+                        cargs.args.addUInt32.name,
+                        cargs.args.addUInt32.nameLen);
+
+                if (status != 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "copy_from_user failed");
+                    status = NameServer_E_OSFAILURE;
+                    osStatus = -EFAULT;
+                }
+            }
+
+            /* invoke the module api */
+            if (status == NameServer_S_SUCCESS) {
+                cargs.args.addUInt32.entry = NameServer_addUInt32(
+                        cargs.args.addUInt32.handle, res->args.add.name,
+                        cargs.args.addUInt32.value);
+
+                if (cargs.args.addUInt32.entry == NULL) {
+                    status = NameServer_E_FAIL;
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "NameServer_addUInt32 failed");
+                }
+            }
+
+            /* track the resource by process id */
+            if (status == NameServer_S_SUCCESS) {
+                Int rstat;
+
+                res->cmd = CMD_NAMESERVER_ADD; /* use this command for both */
+                res->args.add.handle = cargs.args.addUInt32.handle;
+                res->args.add.entry = cargs.args.addUInt32.entry;
+
+                rstat = ResTrack_push(NameServerDrv_state.resTrack, pid,
+                        (List_Elem *)res);
+
+                GT_assert(curTrace, (rstat >= 0));
+            }
+
+            /* failure cleanup */
+            if (status < 0) {
+                if ((res != NULL) && (res->args.add.name != NULL)) {
+                    Memory_free(NULL, res->args.add.name,
+                            cargs.args.addUInt32.nameLen);
+                }
+                if (res != NULL) {
+                    Memory_free(NULL, res, sizeof(NameServerDrv_Res));
+                }
+            }
         }
         break;
 
@@ -354,54 +535,54 @@ long NameServerDrv_ioctl (struct file *  filp,
             UInt16 * procId = NULL;
 
             /* Allocate memory for the name */
-            name = Memory_alloc (NULL, cargs->args.get.nameLen, 0, NULL);
+            name = Memory_alloc (NULL, cargs.args.get.nameLen, 0, NULL);
             GT_assert (curTrace, (name != NULL));
             /* Copy the name */
             ret = copy_from_user (name,
-                                  cargs->args.get.name,
-                                  cargs->args.get.nameLen);
+                                  cargs.args.get.name,
+                                  cargs.args.get.nameLen);
             GT_assert (curTrace, (ret == 0));
 
             /* Allocate memory for the buf */
-            value = Memory_alloc (NULL, cargs->args.get.len, 0, NULL);
+            value = Memory_alloc (NULL, cargs.args.get.len, 0, NULL);
             GT_assert (curTrace, (value != NULL));
 
             /* Allocate memory for the procId */
-            if (cargs->args.get.procLen > 0) {
+            if (cargs.args.get.procLen > 0) {
                 procId = Memory_alloc (NULL,
-                                       cargs->args.get.procLen * sizeof(UInt16),
+                                       cargs.args.get.procLen * sizeof(UInt16),
                                        0,
                                        NULL);
                 GT_assert (curTrace, (procId != NULL));
             }
             /* Copy the procIds */
             ret = copy_from_user (procId,
-                                  cargs->args.get.procId,
-                                  cargs->args.get.procLen);
+                                  cargs.args.get.procId,
+                                  cargs.args.get.procLen);
             GT_assert (curTrace, (ret == 0));
 
-            status = NameServer_get (cargs->args.get.handle,
+            status = NameServer_get (cargs.args.get.handle,
                                      name,
                                      value,
-                                     &cargs->args.get.len,
+                                     &cargs.args.get.len,
                                      procId);
             /* Do not assert. This can return NameServer_E_NOTFOUND
              * as a valid runtime failure.
              */
 
             /* Copy the value */
-            ret = copy_to_user (cargs->args.get.value,
+            ret = copy_to_user (cargs.args.get.value,
                                 value,
-                                cargs->args.get.len);
+                                cargs.args.get.len);
             GT_assert (curTrace, (ret == 0));
 
             /* free the allocated memory */
-            Memory_free (NULL, name, cargs->args.get.nameLen);
-            Memory_free (NULL, value, cargs->args.get.len);
+            Memory_free (NULL, name, cargs.args.get.nameLen);
+            Memory_free (NULL, value, cargs.args.get.len);
             if (procId != NULL) {
                 Memory_free (NULL,
                              procId,
-                             cargs->args.get.procLen *sizeof(UInt16));
+                             cargs.args.get.procLen *sizeof(UInt16));
             }
 
         }
@@ -413,33 +594,33 @@ long NameServerDrv_ioctl (struct file *  filp,
             Ptr      value;
 
             /* Allocate memory for the name */
-            name = Memory_alloc (NULL, cargs->args.getLocal.nameLen, 0, NULL);
+            name = Memory_alloc (NULL, cargs.args.getLocal.nameLen, 0, NULL);
             GT_assert (curTrace, (name != NULL));
             /* Copy the name */
             ret = copy_from_user (name,
-                                  cargs->args.getLocal.name,
-                                  cargs->args.getLocal.nameLen);
+                                  cargs.args.getLocal.name,
+                                  cargs.args.getLocal.nameLen);
             GT_assert (curTrace, (ret == 0));
 
             /* Allocate memory for the buf */
-            value = Memory_alloc (NULL, cargs->args.getLocal.len, 0, NULL);
+            value = Memory_alloc (NULL, cargs.args.getLocal.len, 0, NULL);
             GT_assert (curTrace, (value != NULL));
 
-            status = NameServer_getLocal (cargs->args.getLocal.handle,
+            status = NameServer_getLocal (cargs.args.getLocal.handle,
                                           name,
                                           value,
-                                          &cargs->args.getLocal.len);
+                                          &cargs.args.getLocal.len);
             GT_assert (curTrace, (status >= 0));
 
             /* Copy the value */
-            ret = copy_to_user (cargs->args.getLocal.value,
+            ret = copy_to_user (cargs.args.getLocal.value,
                                 value,
-                                cargs->args.getLocal.len);
+                                cargs.args.getLocal.len);
             GT_assert (curTrace, (ret == 0));
 
             /* free the allocated memory */
-            Memory_free (NULL, name, cargs->args.getLocal.nameLen);
-            Memory_free (NULL, value,  cargs->args.getLocal.len);
+            Memory_free (NULL, name, cargs.args.getLocal.nameLen);
+            Memory_free (NULL, value,  cargs.args.getLocal.len);
         }
         break;
 
@@ -448,49 +629,123 @@ long NameServerDrv_ioctl (struct file *  filp,
             String name;
 
             /* Allocate memory for the name */
-            name = Memory_alloc (NULL, cargs->args.match.nameLen, 0, NULL);
+            name = Memory_alloc (NULL, cargs.args.match.nameLen, 0, NULL);
             GT_assert (curTrace, (name != NULL));
             /* Copy the name */
             ret = copy_from_user (name,
-                                  cargs->args.match.name,
-                                  cargs->args.match.nameLen);
+                                  cargs.args.match.name,
+                                  cargs.args.match.nameLen);
             GT_assert (curTrace, (ret == 0));
 
-            cargs->args.match.count = NameServer_match (
-                                                   cargs->args.match.handle,
+            cargs.args.match.count = NameServer_match (
+                                                   cargs.args.match.handle,
                                                    name,
-                                                   &cargs->args.match.value);
-            GT_assert (curTrace, (cargs->args.match.count >= 0));
+                                                   &cargs.args.match.value);
+            GT_assert (curTrace, (cargs.args.match.count >= 0));
 
             /* free the allocated memory */
-            Memory_free (NULL, name, cargs->args.match.nameLen);
+            Memory_free (NULL, name, cargs.args.match.nameLen);
         }
         break;
 
-        case CMD_NAMESERVER_REMOVE:
-        {
-            String   name;
+        case CMD_NAMESERVER_REMOVE: {
+            NameServerDrv_Res   res;
+            List_Elem *         elem;
 
-            /* Allocate memory for the name */
-            name = Memory_alloc (NULL, cargs->args.remove.nameLen, 0, NULL);
-            GT_assert (curTrace, (name != NULL));
-            /* Copy the name */
-            ret = copy_from_user (name,
-                                  cargs->args.remove.name,
-                                  cargs->args.remove.nameLen);
-            GT_assert (curTrace, (ret == 0));
+            /* save for resource untracking */
+            res.cmd = CMD_NAMESERVER_ADD;
+            res.args.add.entry = NULL;
 
-            NameServer_remove (cargs->args.remove.handle,  name);
+            /* allocate memory for the name */
+            res.args.add.len = cargs.args.remove.nameLen;
+            res.args.add.name = Memory_alloc(NULL,
+                    cargs.args.remove.nameLen, 0, NULL);
 
-            /* free the allocated memory */
-            Memory_free (NULL, name, cargs->args.remove.nameLen);
+            if (res.args.add.name == NULL) {
+                status = NameServer_E_MEMORY;
+                GT_setFailureReason(curTrace, GT_4CLASS,
+                        "NameServerDrv_ioctl", status, "out of memory");
+            }
+
+            /* copy the name from user memory */
+            if (status == NameServer_S_SUCCESS) {
+                status = copy_from_user(res.args.add.name,
+                        cargs.args.remove.name, cargs.args.remove.nameLen);
+
+                if (status != 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "copy_from_user failed");
+                    status = NameServer_E_OSFAILURE;
+                    osStatus = -EFAULT;
+                }
+            }
+
+            /* invoke the module api */
+            if (status == NameServer_S_SUCCESS) {
+                status = NameServer_remove(cargs.args.remove.handle,
+                        res.args.add.name);
+
+                if (status < 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "NameServer_remove failed");
+                }
+            }
+
+            /* untrack the resource */
+            if (status == NameServer_S_SUCCESS) {
+                NameServerDrv_Res * resPtr;
+
+                ResTrack_remove(NameServerDrv_state.resTrack, pid,
+                        (List_Elem *)(&res), NameServerDrv_resCmpFxn, &elem);
+
+                GT_assert(curTrace, (elem != NULL));
+
+                resPtr = (NameServerDrv_Res *)elem;
+                Memory_free(NULL, resPtr->args.add.name, resPtr->args.add.len);
+                Memory_free(NULL, elem, sizeof(NameServerDrv_Res));
+            }
+
+            /* don't need the name memory anymore */
+            if (res.args.add.name != NULL) {
+                Memory_free(NULL, res.args.add.name,
+                        cargs.args.remove.nameLen);
+            }
         }
         break;
 
-        case CMD_NAMESERVER_REMOVEENTRY:
-        {
-            NameServer_removeEntry (cargs->args.removeEntry.handle,
-                                    cargs->args.removeEntry.entry);
+        case CMD_NAMESERVER_REMOVEENTRY: {
+            NameServerDrv_Res   res;
+            List_Elem *         elem;
+
+            /* save for resource untracking */
+            res.cmd = CMD_NAMESERVER_ADD;
+            res.args.add.name = NULL;
+            res.args.add.entry = cargs.args.removeEntry.entry;
+
+            /* invoke the module api */
+            status = NameServer_removeEntry(cargs.args.removeEntry.handle,
+                    cargs.args.removeEntry.entry);
+
+            if (status < 0) {
+                GT_setFailureReason(curTrace, GT_4CLASS, "NameServerDrv_ioctl",
+                        status, "NameServer_remove failed");
+            }
+
+            /* untrack the resource */
+            if (status == NameServer_S_SUCCESS) {
+                NameServerDrv_Res * resPtr;
+
+                ResTrack_remove(NameServerDrv_state.resTrack, pid,
+                        (List_Elem *)(&res), NameServerDrv_resCmpFxn, &elem);
+
+                GT_assert(curTrace, (elem != NULL));
+
+                resPtr = (NameServerDrv_Res *)elem;
+                Memory_free(NULL, resPtr->args.add.name, resPtr->args.add.len);
+                Memory_free(NULL, elem, sizeof(NameServerDrv_Res));
+            }
         }
         break;
 
@@ -499,44 +754,124 @@ long NameServerDrv_ioctl (struct file *  filp,
             NameServer_Params params;
 
             NameServer_Params_init (&params);
-            ret = copy_to_user (cargs->args.ParamsInit.params,
+            ret = copy_to_user (cargs.args.ParamsInit.params,
                                 &params,
                                 sizeof (NameServer_Params));
             GT_assert (curTrace, (ret == 0));
         }
         break;
 
-        case CMD_NAMESERVER_CREATE:
-        {
-            NameServer_Params params;
-            String            name;
-            NameServer_Handle handle;
+        case CMD_NAMESERVER_CREATE: {
+            NameServer_Params   params;
+            String              name = NULL;
+            NameServerDrv_Res * res = NULL;
 
-            /* Allocate memory for the name */
-            name = Memory_alloc (NULL, cargs->args.create.nameLen, 0, NULL);
-            GT_assert (curTrace, (name != NULL));
-            /* Copy the name */
-            ret = copy_from_user (name,
-                                  cargs->args.create.name,
-                                  cargs->args.create.nameLen);
-            GT_assert (curTrace, (ret == 0));
+            /* allocate memory for the name */
+            name = Memory_alloc(NULL, cargs.args.create.nameLen, 0, NULL);
 
-            /* Copy the parameters */
-            ret = copy_from_user (&params,
-                                  cargs->args.create.params,
-                                  sizeof (NameServer_Params));
-            GT_assert (curTrace, (ret == 0));
+            if (name == NULL) {
+                status = NameServer_E_MEMORY;
+                GT_setFailureReason(curTrace, GT_4CLASS,
+                        "NameServerDrv_ioctl", status, "out of memory");
+            }
 
-            handle = NameServer_create (name, &params);
-            GT_assert (curTrace, (handle != NULL));
-            Memory_free (NULL, name, cargs->args.create.nameLen);
+            /* copy the name from user memory */
+            if (status == NameServer_S_SUCCESS) {
+                status = copy_from_user(name, cargs.args.create.name,
+                        cargs.args.create.nameLen);
+
+                if (status != 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "copy_from_user failed");
+                    status = NameServer_E_OSFAILURE;
+                    osStatus = -EFAULT;
+                }
+            }
+
+            /* copy the params from user memory */
+            if (status == NameServer_S_SUCCESS) {
+                status = copy_from_user(&params, cargs.args.create.params,
+                        sizeof(NameServer_Params));
+
+                if (status != 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "copy_from_user failed");
+                    status = NameServer_E_OSFAILURE;
+                    osStatus = -EFAULT;
+                }
+            }
+
+            /* allocate resource tracker object */
+            if (status == NameServer_S_SUCCESS) {
+                res = Memory_alloc(NULL, sizeof(NameServerDrv_Res), 0, NULL);
+
+                if (res == NULL) {
+                    status = NameServer_E_MEMORY;
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status, "out of memory");
+                }
+            }
+
+            /* invoke the module api */
+            if (status == NameServer_S_SUCCESS) {
+                cargs.args.create.handle = NameServer_create(name, &params);
+
+                if (cargs.args.create.handle == NULL) {
+                    status = NameServer_E_FAIL;
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "NameServer_create failed");
+                }
+            }
+
+            /* track the resource by process id */
+            if (status == NameServer_S_SUCCESS) {
+                Int rstat;
+
+                res->cmd = cmd;
+                res->args.create.handle = cargs.args.create.handle;
+
+                rstat = ResTrack_push(NameServerDrv_state.resTrack, pid,
+                        (List_Elem *)res);
+
+                GT_assert(curTrace, (rstat >= 0));
+            }
+
+            /* don't need name memory anymore */
+            if (name != NULL) {
+                Memory_free(NULL, name, cargs.args.create.nameLen);
+            }
+
+            /* failure cleanup */
+            if (status < 0) {
+                if (res != NULL) {
+                    Memory_free(NULL, res, sizeof(NameServerDrv_Res));
+                }
+            }
         }
         break;
 
-        case CMD_NAMESERVER_DELETE:
-        {
-            status = NameServer_delete (&cargs->args.delete.handle);
-            GT_assert (curTrace, (status >= 0));
+        case CMD_NAMESERVER_DELETE: {
+            NameServerDrv_Res   res;
+            List_Elem *         elem;
+
+            /* save for resource untracking, handle set to null by delete */
+            res.cmd = CMD_NAMESERVER_CREATE;
+            res.args.create.handle = cargs.args.delete.handle;
+
+            /* common code for delete command */
+            status = NameServerDrv_cmd_delete(&cargs.args.delete.handle);
+
+            /* untrack the resource */
+            if (status == NameServer_S_SUCCESS) {
+                ResTrack_remove(NameServerDrv_state.resTrack, pid,
+                        (List_Elem *)(&res), NameServerDrv_resCmpFxn, &elem);
+
+                GT_assert(curTrace, (elem != NULL));
+                Memory_free(NULL, elem, sizeof(NameServerDrv_Res));
+            }
         }
         break;
 
@@ -545,32 +880,60 @@ long NameServerDrv_ioctl (struct file *  filp,
             String   name;
 
             /* Allocate memory for the name */
-            name = Memory_alloc (NULL, cargs->args.getHandle.nameLen, 0, NULL);
+            name = Memory_alloc (NULL, cargs.args.getHandle.nameLen, 0, NULL);
             GT_assert (curTrace, (name != NULL));
             /* Copy the name */
             ret = copy_from_user (name,
-                                  cargs->args.getHandle.name,
-                                  cargs->args.getHandle.nameLen);
+                                  cargs.args.getHandle.name,
+                                  cargs.args.getHandle.nameLen);
             GT_assert (curTrace, (ret == 0));
 
-            cargs->args.getHandle.handle = NameServer_getHandle (name);
+            cargs.args.getHandle.handle = NameServer_getHandle (name);
 
             /* free the allocated memory */
-            Memory_free (NULL, name, cargs->args.getHandle.nameLen);
+            Memory_free (NULL, name, cargs.args.getHandle.nameLen);
         }
         break;
 
-        case CMD_NAMESERVER_SETUP:
-        {
-            status = NameServer_setup ();
-            GT_assert (curTrace, (status >= 0));
+        case CMD_NAMESERVER_SETUP: {
+            /* register process with resource tracker */
+            status = ResTrack_register(NameServerDrv_state.resTrack, pid);
+
+            if (status < 0) {
+                GT_setFailureReason(curTrace, GT_4CLASS, "NameServerDrv_ioctl",
+                        status, "resource tracker register failed");
+                status = NameServer_E_FAIL;
+                pid = 0;
+            }
+
+            /* setup the module */
+            if (status == NameServer_S_SUCCESS) {
+                status = NameServer_setup();
+
+                if (status < 0) {
+                    GT_setFailureReason(curTrace, GT_4CLASS,
+                            "NameServerDrv_ioctl", status,
+                            "kernel-side MessageQ_setup failed");
+                }
+            }
+
+            /* failure case */
+            if (status < 0) {
+                if (pid != 0) {
+                    ResTrack_unregister(NameServerDrv_state.resTrack, pid);
+                }
+            }
         }
         break;
 
-        case CMD_NAMESERVER_DESTROY:
-        {
-            status = NameServer_destroy ();
-            GT_assert (curTrace, (status >= 0));
+        case CMD_NAMESERVER_DESTROY: {
+            /* unregister process from resource tracker */
+            status = ResTrack_unregister(NameServerDrv_state.resTrack, pid);
+            GT_assert(curTrace, (status >= 0));
+
+            /* finalize the module */
+            status = NameServer_destroy();
+            GT_assert(curTrace, (status >= 0));
         }
         break;
 
@@ -589,7 +952,11 @@ long NameServerDrv_ioctl (struct file *  filp,
         break;
     }
 
-    cargs->apiStatus = status;
+    cargs.apiStatus = status;
+
+    /* copy the full args back to user space */
+    ret = copy_to_user((Ptr)args, &cargs, sizeof(NameServerDrv_CmdArgs));
+    GT_assert (curTrace, (ret == 0));
 
     GT_1trace (curTrace, GT_LEAVE, "NameServerDrv_ioctl", osStatus);
 
@@ -597,6 +964,165 @@ long NameServerDrv_ioctl (struct file *  filp,
     return osStatus;
 }
 
+
+/** ============================================================================
+ *  Internal functions
+ *  ============================================================================
+ */
+
+/*
+ *  ======== NameServerDrv_setup ========
+ */
+static Void NameServerDrv_setup(Void)
+{
+    /* create a resource tracker instance */
+    NameServerDrv_state.resTrack = ResTrack_create(NULL);
+
+    if (NameServerDrv_state.resTrack == NULL) {
+        GT_setFailureReason(curTrace, GT_4CLASS, "NameServerDrv_setup", -1,
+                "Failed to create resource tracker");
+    }
+}
+
+/*
+ *  ======== NameServerDrv_destroy ========
+ */
+static Void NameServerDrv_destroy(Void)
+{
+    /* delete the resource tracker instance */
+    ResTrack_delete(&NameServerDrv_state.resTrack);
+}
+
+/*
+ *  ======== NameServerDrv_releaseResources ========
+ */
+static Void NameServerDrv_releaseResources(Osal_Pid pid)
+{
+    Int                 status;
+    ResTrack_Handle     resTrack;
+    Bool                unreg;
+    List_Elem *         elem;
+    NameServerDrv_Res * res;
+
+    status = NameServer_S_SUCCESS;
+    resTrack = NameServerDrv_state.resTrack;
+    unreg = FALSE;
+
+    /* reclaim abandoned resources */
+    do {
+        status = ResTrack_pop(resTrack, pid, &elem);
+
+        /* nothing to do if process no longer registered */
+        if (status == ResTrack_E_PID) {
+            break;
+        }
+
+        unreg = TRUE; /* need to unregister process */
+
+        /* done if process has no more tracked resources */
+        if (elem == NULL) {
+            break;
+        }
+
+        /* decode resource */
+        res = (NameServerDrv_Res*)elem;
+
+        switch (res->cmd) {
+            case CMD_NAMESERVER_CREATE:
+                NameServerDrv_cmd_delete((NameServer_Handle *)
+                        &(res->args.create.handle));
+                break;
+
+            case CMD_NAMESERVER_ADD:
+                NameServer_removeEntry(res->args.add.handle,
+                        res->args.add.entry);
+                break;
+
+            default:
+                break;
+        }
+
+        Memory_free(NULL, elem, sizeof(NameServerDrv_Res));
+    } while (elem != NULL);
+
+    /* unregister the process object */
+    if (unreg) {
+        ResTrack_unregister(resTrack, pid);
+    }
+}
+
+/*
+ *  ======== NameServerDrv_resCmpFxn ========
+ */
+static Bool NameServerDrv_resCmpFxn(Void *ptrA, Void *ptrB)
+{
+    NameServerDrv_Res * resA;
+    NameServerDrv_Res * resB;
+    Bool                found;
+
+    found = FALSE;
+    resA = (NameServerDrv_Res *)ptrA;
+    resB = (NameServerDrv_Res *)ptrB;
+
+    if (resA->cmd != resB->cmd) {
+        goto leave;
+    }
+
+    switch (resA->cmd) {
+        case CMD_NAMESERVER_CREATE: {
+            NameServerDrv_CreateRes *   argsA = &resA->args.create;
+            NameServerDrv_CreateRes *   argsB = &resB->args.create;
+
+            if (argsA->handle == argsB->handle) {
+                found = TRUE;
+            }
+        }
+        break;
+
+        case CMD_NAMESERVER_ADD: {
+            NameServerDrv_AddRes *      argsA = &resA->args.add;
+            NameServerDrv_AddRes *      argsB = &resB->args.add;
+
+            /* either the name will match, or... */
+            if ((argsA->name != NULL) && (argsB->name != NULL) &&
+                    (strcmp(argsA->name, argsB->name) == 0)) {
+                found = TRUE;
+            }
+
+            /* the entry will match, but not both */
+            else if (argsA->entry == argsB->entry) {
+                found = TRUE;
+            }
+        }
+        break;
+
+        default:
+            GT_setFailureReason(curTrace, GT_4CLASS, "NameServerDrv_resCmpFxn",
+                    -1, "unknown command");
+    }
+
+leave:
+    return(found);
+}
+
+/*
+ *  ======== NameServerDrv_cmd_delete ========
+ */
+static Int NameServerDrv_cmd_delete(NameServer_Handle *handlePtr)
+{
+    Int status;
+
+    /* invoke the module api */
+    status = NameServer_delete(handlePtr);
+
+    if (status < 0) {
+        /* use NameServerDrv_ioctl in macro */
+        GT_setFailureReason(curTrace, GT_4CLASS, "NameServerDrv_ioctl",
+                status, "NameServer_delete failed");
+    }
+
+    return(status);
+}
 
 /** ============================================================================
  *  Functions required for multiple .ko modules configuration

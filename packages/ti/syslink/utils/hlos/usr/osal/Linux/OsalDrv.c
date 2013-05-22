@@ -62,6 +62,7 @@
 #include <ti/syslink/utils/Trace.h>
 #include <ti/syslink/inc/TraceDrvDefs.h>
 #include <ti/syslink/utils/Memory.h>
+#include <ti/syslink/utils/Dev.h>
 #include <ti/syslink/inc/usr/Linux/OsalDrv.h>
 #include <ti/syslink/inc/OsalDrvDefs.h>
 
@@ -112,7 +113,7 @@ OsalDrv_open (Void)
         /* TBD: Protection for refCount. */
         OsalDrv_refCount++;
 
-        OsalDrv_handle = open (OSALDRV_DRIVER_NAME, O_SYNC | O_RDWR);
+        OsalDrv_handle = Dev_pollOpen (OSALDRV_DRIVER_NAME, O_SYNC | O_RDWR);
         if (OsalDrv_handle < 0) {
             perror ("OsalDrv driver open: " OSALDRV_DRIVER_NAME);
             /*! @retval OSALDRV_E_OSFAILURE Failed to open OsalDrv driver with

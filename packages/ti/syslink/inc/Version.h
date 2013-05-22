@@ -64,7 +64,7 @@ extern "C" {
  * =============================================================================
  */
 
-#define SYSLINK_VERSION "2.20.00.14"
+#define SYSLINK_VERSION "2.20.02.20"
 
 
 #if defined (__cplusplus)

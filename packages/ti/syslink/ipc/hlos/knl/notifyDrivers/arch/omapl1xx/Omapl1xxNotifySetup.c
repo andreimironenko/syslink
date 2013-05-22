@@ -101,7 +101,7 @@ static UInt NotifySetup_dspRecvIntId0 = NotifySetup_DSP_INT0;
 static UInt NotifySetup_armRecvIntId0 = NotifySetup_ARM_INT0;
 
 /* Enable the second interrupt line */
-static Bool NotifySetup_useSecondLine = TRUE;
+static Bool NotifySetup_useSecondLine = FALSE;
 
 /*
  *  Incoming interrupt ID for line #1 line on DSP

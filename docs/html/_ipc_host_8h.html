@@ -54,6 +54,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div>
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
 <a href="#define-members">Defines</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
@@ -78,14 +79,24 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </pre></div> 
 <p><a href="_ipc_host_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
+<tr><td colspan="2"><h2><a name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_ipc___terminate.html">Ipc_Terminate</a></td></tr>
+<tr><td class="mdescLeft">&#160;</td><td class="mdescRight">Argument for the Ipc_CONTROLCMD_SETTERMINATEPOLICY command.  <a href="struct_ipc___terminate.html#_details">More...</a><br/></td></tr>
 <tr><td colspan="2"><h2><a name="define-members"></a>
 Defines</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_ipc_host_8h.html#a3d15c102515c2cac19246ebf525f5e7d">Ipc_TERMINATEPOLICY_STOP</a>&#160;&#160;&#160;1</td></tr>
+<tr><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the stop terminate policy.  <a href="#a3d15c102515c2cac19246ebf525f5e7d"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_ipc_host_8h.html#a1229919513266da85e13429a3952ccd4">Ipc_TERMINATEPOLICY_NOTIFY</a>&#160;&#160;&#160;2</td></tr>
+<tr><td class="mdescLeft">&#160;</td><td class="mdescRight">Use the notify terminate policy.  <a href="#a1229919513266da85e13429a3952ccd4"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_ipc_host_8h.html#a3b5a2f1d389a104ea0b02aad9c5978fc">Ipc_CONTROLCMD_LOADCALLBACK</a>&#160;&#160;&#160;(0xBABE0000)</td></tr>
 <tr><td class="mdescLeft">&#160;</td><td class="mdescRight">Control command ID for load callback.  <a href="#a3b5a2f1d389a104ea0b02aad9c5978fc"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_ipc_host_8h.html#a1624f824278e993226134c8b8ef61992">Ipc_CONTROLCMD_STARTCALLBACK</a>&#160;&#160;&#160;(0xBABE0001)</td></tr>
 <tr><td class="mdescLeft">&#160;</td><td class="mdescRight">Control command ID for start callback.  <a href="#a1624f824278e993226134c8b8ef61992"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_ipc_host_8h.html#af2a882f81ddbd6493defb19f14d302f7">Ipc_CONTROLCMD_STOPCALLBACK</a>&#160;&#160;&#160;(0xBABE0002)</td></tr>
 <tr><td class="mdescLeft">&#160;</td><td class="mdescRight">Control command ID for stop callback.  <a href="#af2a882f81ddbd6493defb19f14d302f7"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_ipc_host_8h.html#a10bc56753834cf04eba473fe775433eb">Ipc_CONTROLCMD_SETTERMINATEPOLICY</a>&#160;&#160;&#160;(0xBABE0003)</td></tr>
+<tr><td class="mdescLeft">&#160;</td><td class="mdescRight">Control command ID for specifying the terminate handling policy.  <a href="#a10bc56753834cf04eba473fe775433eb"></a><br/></td></tr>
 <tr><td colspan="2"><h2><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="_std_8h.html#a7cc214a236ad3bb6ad435bdcf5262a3f">Int</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57">Ipc_control</a> (<a class="el" href="_std_8h.html#accc14a7c843716dfed734f3a03e8d2b6">UInt16</a> procId, <a class="el" href="_std_8h.html#adf1ef98b7070177c7c709b0b82276a07">Int32</a> cmdId, <a class="el" href="_std_8h.html#a6ce3b7d762fb68676a01d4a36ebf42c1">Ptr</a> arg)</td></tr>
@@ -94,6 +105,38 @@ Functions</h2></td></tr>
 <tr><td class="mdescLeft">&#160;</td><td class="mdescRight">Return a runtime id for the given application key.  <a href="#a80045d7de31e30daa6b0fe5a697e6cd8"></a><br/></td></tr>
 </table>
 <hr/><h2>Define Documentation</h2>
+<a class="anchor" id="a3d15c102515c2cac19246ebf525f5e7d"></a><!-- doxytag: member="IpcHost.h::Ipc_TERMINATEPOLICY_STOP" ref="a3d15c102515c2cac19246ebf525f5e7d" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define Ipc_TERMINATEPOLICY_STOP&#160;&#160;&#160;1</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Use the stop terminate policy. </p>
+<p>When the host process termiantes (e.g. CTRL-C, SIGKILL), this terminate policy will stop the remote processor and place it into reset. The terminate action is carried out by the SysLink driver on behalf of the terminated process. </p>
+
+</div>
+</div>
+<a class="anchor" id="a1229919513266da85e13429a3952ccd4"></a><!-- doxytag: member="IpcHost.h::Ipc_TERMINATEPOLICY_NOTIFY" ref="a1229919513266da85e13429a3952ccd4" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define Ipc_TERMINATEPOLICY_NOTIFY&#160;&#160;&#160;2</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Use the notify terminate policy. </p>
+<p>When the host process termiantes (e.g. CTRL-C, SIGKILL), this terminate policy will send a notify event to the remote processor. The lineId and eventId are determined by the remote executable through configuration parameters (See ti/syslink/ipc/rtos/SysLink.xdc). </p>
+
+</div>
+</div>
 <a class="anchor" id="a3b5a2f1d389a104ea0b02aad9c5978fc"></a><!-- doxytag: member="IpcHost.h::Ipc_CONTROLCMD_LOADCALLBACK" ref="a3b5a2f1d389a104ea0b02aad9c5978fc" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -106,13 +149,10 @@ Functions</h2></td></tr>
 <div class="memdoc">
 
 <p>Control command ID for load callback. </p>
-<dl class="remark"><dt><b>Remarks:</b></dt><dd>This command must be sent (via <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a>) before using IPC with the slave, and after loading the slave.</dd>
-<dd>
-This call ensures resources (e.g. Shared Region 0) are visible to the slave (for example, by enabling the slave-side MMU). This call then typically enables the slave-side call to <a class="el" href="_ipc_8h.html#aca550c6a5498637cfec7b0f4e6d07828" title="Reserves memory, creates default GateMP and HeapMemMP.">Ipc_start()</a> to succeed.</dd>
-<dd>
-When ProcMgr is used to load the slave (the typical case), the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> should be NULL.</dd>
-<dd>
-When ProcMgr is <em>not</em> used to load the slave (supported, but not the typical case), the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> must be a pointer to the slave-side address of the <code>_Ipc_ResetVector</code> symbol. This is often obtained by inspecting the slave-side executable's .map file.</dd></dl>
+<p>This command must be sent (via <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a>) before using IPC with the slave, and after loading the slave.</p>
+<p>This call ensures resources (e.g. Shared Region 0) are visible to the slave (for example, by enabling the slave-side MMU). This call then typically enables the slave-side call to <a class="el" href="_ipc_8h.html#aca550c6a5498637cfec7b0f4e6d07828" title="Reserves memory, creates default GateMP and HeapMemMP.">Ipc_start()</a> to succeed.</p>
+<p>When ProcMgr is used to load the slave (the typical case), the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> should be NULL.</p>
+<p>When ProcMgr is <em>not</em> used to load the slave (supported, but not the typical case), the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> must be a pointer to the slave-side address of the <code>_Ipc_ResetVector</code> symbol. This is often obtained by inspecting the slave-side executable's .map file.</p>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> </dd></dl>
 
 </div>
@@ -129,11 +169,9 @@ When ProcMgr is <em>not</em> used to load the slave (supported, but not the typi
 <div class="memdoc">
 
 <p>Control command ID for start callback. </p>
-<dl class="remark"><dt><b>Remarks:</b></dt><dd>This command must be sent (via <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a>) before using IPC with the slave, and after sending the <a class="el" href="_ipc_host_8h.html#a3b5a2f1d389a104ea0b02aad9c5978fc" title="Control command ID for load callback.">Ipc_CONTROLCMD_LOADCALLBACK</a> command.</dd>
-<dd>
-This call performs a handshake with the slave processor, typically enabling the slave-side call to <a class="el" href="_ipc_8h.html#a170f84915df79377080be708302bcb08" title="Attach to remote processor.">Ipc_attach()</a> to succeed.</dd>
-<dd>
-When sending this command, the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> should be NULL.</dd></dl>
+<p>This command must be sent (via <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a>) before using IPC with the slave, and after sending the <a class="el" href="_ipc_host_8h.html#a3b5a2f1d389a104ea0b02aad9c5978fc" title="Control command ID for load callback.">Ipc_CONTROLCMD_LOADCALLBACK</a> command.</p>
+<p>This call performs a handshake with the slave processor, typically enabling the slave-side call to <a class="el" href="_ipc_8h.html#a170f84915df79377080be708302bcb08" title="Attach to remote processor.">Ipc_attach()</a> to succeed.</p>
+<p>When sending this command, the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> should be NULL.</p>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> </dd></dl>
 
 </div>
@@ -150,13 +188,28 @@ When sending this command, the <code>arg</code> passed to <a class="el" href="_i
 <div class="memdoc">
 
 <p>Control command ID for stop callback. </p>
-<dl class="remark"><dt><b>Remarks:</b></dt><dd>This command must be sent (via <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a>) to detach from an attached slave.</dd>
-<dd>
-This call first performs a handshake with the slave processor, typically enabling the slave-side calls to <a class="el" href="_ipc_8h.html#abd0bc0fb5d84415b441c7050f92826c0" title="Detach from the remote processor.">Ipc_detach()</a> and <a class="el" href="_ipc_8h.html#ae47b1d9fa8486f162c836f142f0ab2ee" title="Resets the Ipc state.">Ipc_stop()</a> to succeed. It then may make resources (e.g. Shared Region 0) inaccessible to the slave (for example by disabling the slave's MMU).</dd>
-<dd>
-When ProcMgr is used to load the slave (the typical case), the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> should be NULL.</dd>
-<dd>
-When ProcMgr is <em>not</em> used to load the slave (supported, but not the typical case), the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> must be a pointer to the slave-side address of the <code>_Ipc_ResetVector</code> symbol. This is often obtained by inspecting the slave-side executable's .map file.</dd></dl>
+<p>This command must be sent (via <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a>) to detach from an attached slave.</p>
+<p>This call first performs a handshake with the slave processor, typically enabling the slave-side calls to <a class="el" href="_ipc_8h.html#abd0bc0fb5d84415b441c7050f92826c0" title="Detach from the remote processor.">Ipc_detach()</a> and <a class="el" href="_ipc_8h.html#ae47b1d9fa8486f162c836f142f0ab2ee" title="Resets the Ipc state.">Ipc_stop()</a> to succeed. It then may make resources (e.g. Shared Region 0) inaccessible to the slave (for example by disabling the slave's MMU).</p>
+<p>When ProcMgr is used to load the slave (the typical case), the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> should be NULL.</p>
+<p>When ProcMgr is <em>not</em> used to load the slave (supported, but not the typical case), the <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> must be a pointer to the slave-side address of the <code>_Ipc_ResetVector</code> symbol. This is often obtained by inspecting the slave-side executable's .map file.</p>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a10bc56753834cf04eba473fe775433eb"></a><!-- doxytag: member="IpcHost.h::Ipc_CONTROLCMD_SETTERMINATEPOLICY" ref="a10bc56753834cf04eba473fe775433eb" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define Ipc_CONTROLCMD_SETTERMINATEPOLICY&#160;&#160;&#160;(0xBABE0003)</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Control command ID for specifying the terminate handling policy. </p>
+<p>Specify the terminate policy to be used by SysLink in the event that the application terminates. The SysLink driver will perform the requested terminate actions on behalf of the terminated application. This is typically used to handle cleanup of resources.</p>
+<p>The <code>arg</code> passed to <a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> must be pointer to an <a class="el" href="struct_ipc___terminate.html" title="Argument for the Ipc_CONTROLCMD_SETTERMINATEPOLICY command.">Ipc_Terminate</a> structure.</p>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57" title="Perform IPC-related control operations with a specific slave.">Ipc_control()</a> </dd></dl>
 
 </div>

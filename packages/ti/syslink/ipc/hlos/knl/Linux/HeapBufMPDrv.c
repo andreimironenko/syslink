@@ -140,7 +140,7 @@ typedef struct {
     union {
         HeapBufMPDrv_CreateRes  create;
     } args;
-} HeapBufMPDrv_Resource;
+} HeapBufMPDrv_Res;
 
 
 /** ============================================================================
@@ -315,22 +315,21 @@ static Int HeapBufMPDrv_close(struct inode *inode, struct file *filp)
     return(0);
 }
 
-
-/*!
- *  @brief  Linux specific function to close the driver.
+/*
+ *  ======== HeapBufMPDrv_ioctl ========
+ *
  */
 static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
         unsigned long args)
 {
-    int                  osStatus = 0;
-    HeapBufMPDrv_CmdArgs * dstArgs  = (HeapBufMPDrv_CmdArgs *) args;
-    Int32                status = HeapBufMP_S_SUCCESS;
-    Int32                ret;
-    HeapBufMPDrv_CmdArgs   cargs;
-    Osal_Pid pid;
+    int                         osStatus = 0;
+    HeapBufMPDrv_CmdArgs *      dstArgs = (HeapBufMPDrv_CmdArgs *)args;
+    Int32                       status = HeapBufMP_S_SUCCESS;
+    Int32                       ret;
+    HeapBufMPDrv_CmdArgs        cargs;
+    Osal_Pid                    pid;
 
-    GT_3trace (curTrace, GT_ENTER, "HeapBufMPDrv_ioctl",
-               filp, cmd, args);
+    GT_3trace(curTrace, GT_ENTER, "HeapBufMPDrv_ioctl", filp, cmd, args);
 
     /* save the process id for resource tracking */
     pid = pid_nr(filp->f_owner.pid);
@@ -383,8 +382,9 @@ static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
         break;
 
         case CMD_HEAPBUFMP_CREATE: {
-            HeapBufMP_Params        params;
-            HeapBufMPDrv_Resource * res = NULL;
+            HeapBufMP_Params    params;
+            HeapBufMPDrv_Res *  res = NULL;
+
             params.name = NULL;
 
             /* copy params struct from user-side */
@@ -443,7 +443,7 @@ static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
 
             /* allocate resource tracker object */
             if (status == HeapBufMP_S_SUCCESS) {
-                res = Memory_alloc(NULL, sizeof(HeapBufMPDrv_Resource), 0,NULL);
+                res = Memory_alloc(NULL, sizeof(HeapBufMPDrv_Res), 0,NULL);
 
                 if (res == NULL) {
                     status = HeapBufMP_E_MEMORY;
@@ -485,15 +485,15 @@ static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
             /* failure cleanup */
             if (status < 0) {
                 if (res != NULL) {
-                    Memory_free(NULL, res, sizeof(HeapBufMPDrv_Resource));
+                    Memory_free(NULL, res, sizeof(HeapBufMPDrv_Res));
                 }
             }
         }
         break;
 
         case CMD_HEAPBUFMP_DELETE: {
-            HeapBufMPDrv_Resource res;
-            List_Elem *elem;
+            HeapBufMPDrv_Res    res;
+            List_Elem *         elem;
 
             /* save for resource untracking, handle set to null by delete */
             res.cmd = CMD_HEAPBUFMP_CREATE;
@@ -509,7 +509,7 @@ static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
                         (List_Elem *)(&res), HeapBufMPDrv_resCmpFxn, &elem);
 
                 GT_assert(curTrace, (elem != NULL));
-                Memory_free(NULL, elem, sizeof(HeapBufMPDrv_Resource));
+                Memory_free(NULL, elem, sizeof(HeapBufMPDrv_Res));
             }
         }
         break;
@@ -599,7 +599,6 @@ static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
 
         case CMD_HEAPBUFMP_SETUP: {
             HeapBufMP_Config config;
-            pid_t pid = 0;
 
             /* copy config struct from user space */
             status = copy_from_user(&config, cargs.args.setup.config,
@@ -614,8 +613,6 @@ static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
 
             /* register process with resource tracker */
             if (status == HeapBufMP_S_SUCCESS) {
-                pid = pid_nr(filp->f_owner.pid);
-
                 status = ResTrack_register(HeapBufMPDrv_state.resTrack, pid);
 
                 if (status < 0) {
@@ -623,6 +620,7 @@ static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
                             "HeapBufMPDrv_ioctl", status,
                             "resource tracker register failed");
                     status = HeapBufMP_E_FAIL;
+                    pid = 0;
                 }
             }
 
@@ -647,10 +645,7 @@ static long HeapBufMPDrv_ioctl(struct file *filp, unsigned int cmd,
         break;
 
         case CMD_HEAPBUFMP_DESTROY: {
-            pid_t pid;
-
             /* unregister process from resource tracker */
-            pid = pid_nr(filp->f_owner.pid);
             status = ResTrack_unregister(HeapBufMPDrv_state.resTrack, pid);
             GT_assert(curTrace, (status >= 0));
 
@@ -753,11 +748,11 @@ static Void HeapBufMPDrv_destroy(Void)
  */
 static Void HeapBufMPDrv_releaseResources(Osal_Pid pid)
 {
-    Int status;
-    ResTrack_Handle resTrack;
-    Bool unreg;
-    List_Elem *elem;
-    HeapBufMPDrv_Resource *res;
+    Int                 status;
+    ResTrack_Handle     resTrack;
+    Bool                unreg;
+    List_Elem *         elem;
+    HeapBufMPDrv_Res *  res;
 
     status = HeapBufMP_S_SUCCESS;
     resTrack = HeapBufMPDrv_state.resTrack;
@@ -780,7 +775,7 @@ static Void HeapBufMPDrv_releaseResources(Osal_Pid pid)
         }
 
         /* decode resource */
-        res = (HeapBufMPDrv_Resource *)elem;
+        res = (HeapBufMPDrv_Res *)elem;
 
         switch (res->cmd) {
             case CMD_HEAPBUFMP_CREATE:
@@ -792,7 +787,7 @@ static Void HeapBufMPDrv_releaseResources(Osal_Pid pid)
                 break;
         }
 
-        Memory_free(NULL, elem, sizeof(HeapBufMPDrv_Resource));
+        Memory_free(NULL, elem, sizeof(HeapBufMPDrv_Res));
     } while (elem != NULL);
 
     /* unregister the process object */
@@ -806,21 +801,20 @@ static Void HeapBufMPDrv_releaseResources(Osal_Pid pid)
  */
 static Bool HeapBufMPDrv_resCmpFxn(Void *ptrA, Void *ptrB)
 {
-    HeapBufMPDrv_Resource *resA;
-    HeapBufMPDrv_Resource *resB;
+    HeapBufMPDrv_Res *  resA;
+    HeapBufMPDrv_Res *  resB;
     Bool found;
 
     found = FALSE;
-    resA = (HeapBufMPDrv_Resource *)ptrA;
-    resB = (HeapBufMPDrv_Resource *)ptrB;
+    resA = (HeapBufMPDrv_Res *)ptrA;
+    resB = (HeapBufMPDrv_Res *)ptrB;
 
     if (resA->cmd != resB->cmd) {
         goto leave;
     }
 
     switch (resA->cmd) {
-        case CMD_HEAPBUFMP_CREATE:
-        {
+        case CMD_HEAPBUFMP_CREATE: {
             HeapBufMPDrv_CreateRes *argsA = &resA->args.create;
             HeapBufMPDrv_CreateRes *argsB = &resB->args.create;
 

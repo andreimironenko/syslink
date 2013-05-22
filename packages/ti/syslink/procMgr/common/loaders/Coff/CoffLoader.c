@@ -108,11 +108,6 @@
 #include <ti/ipc/MultiProc.h>
 
 
-#if defined (__cplusplus)
-extern "C" {
-#endif
-
-
 /* =============================================================================
  *  Macros and types
  * =============================================================================
@@ -266,14 +261,13 @@ CoffLoaderFile_tell (Ptr clientHandle, Ptr fileDesc)
  *
  *  @sa     CoffLoaderMem_seek
  */
-inline
-UInt32
-CoffLoaderFile_read (Ptr    clientHandle,
-                     Ptr    fileDesc,
-                     Char * buffer,
-                     UInt32 size,
-                     UInt32 count)
+inline UInt32 CoffLoaderFile_read(Ptr clientHandle, Ptr fileDesc, Char *buffer,
+        UInt32 size, UInt32 count)
 {
+    UInt32 bytesRead;
+    Int status;
+    UInt32 retval;
+
     GT_5trace (curTrace, GT_ENTER, "CoffLoaderFile_read",
                clientHandle, fileDesc, buffer, size, count);
 
@@ -283,10 +277,13 @@ CoffLoaderFile_read (Ptr    clientHandle,
     GT_assert (curTrace, (size != 0));
     GT_assert (curTrace, (count != 0));
 
-    GT_0trace (curTrace, GT_LEAVE, "CoffLoaderFile_read");
+    status = OsalKfile_read(fileDesc, buffer, size, count, &bytesRead);
 
-    /*! @retval Value: Number of bytes read */
-    return (OsalKfile_read (fileDesc, buffer, size, count));
+    retval = (status == OSALKFILE_SUCCESS) ? bytesRead : 0;
+
+    GT_1trace (curTrace, GT_LEAVE, "CoffLoaderFile_read: 0x%x", retval);
+
+    return (retval);
 }
 
 
@@ -2130,7 +2127,3 @@ Int CoffLoader_getSectionData (Loader_Handle        handle,
     /*! @retval LOADER_SUCCESS Operation successful */
     return status;
 }
-
-#if defined (__cplusplus)
-}
-#endif /* defined (__cplusplus) */

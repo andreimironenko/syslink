@@ -130,6 +130,9 @@ Void ResTrack_delete(ResTrack_Handle *handlePtr)
         status = ResTrack_E_FAIL;
     }
 
+    obj = (ResTrack_Object *)(*handlePtr);
+    ResTrack_Instance_finalize(obj);
+
     /* delete the instance object */
     if (status == ResTrack_S_SUCCESS) {
         obj = (ResTrack_Object *)(*handlePtr);
@@ -376,6 +379,9 @@ Int ResTrack_unregister(ResTrack_Handle handle, Osal_Pid pid)
         elem = List_dequeue(proc->resList);
         GT_assert(curTrace, (elem == NULL));
     } while (elem != NULL);
+
+    /* destroy the list object */
+    List_delete(&(proc->resList));
 
     /* free the resource process object */
     Memory_free(NULL, proc, sizeof(ResTrack_Proc));

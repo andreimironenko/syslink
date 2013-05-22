@@ -202,6 +202,8 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_ring_i_o_shm___params___tag.html#a1d84b50108161511bd712cd12d7b3226"><param name="Name" value="dataSharedAddrSize"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_ring_i_o__shared_mem_req_details__tag.html#aa589ab6db8c8c6a2743be8fbbd44d4be"><param name="Name" value="dataSharedMemReq"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="deprecated.html"><param name="Name" value="Deprecated List"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="_dev_8h.html"><param name="Name" value="Dev.h"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="_dev_8h.html#a134abf9c8f9cdd7d976ac4ade2107ddf"><param name="Name" value="Dev_pollOpen"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_syslink_mem_mgr___alloc_block__tag.html#a5f46163b7c929b21cd37f5f48e8dc6e6"><param name="Name" value="dim"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_disclaimer.html"><param name="Name" value="Disclaimer"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_std_8h.html#a1f2c5f02159fb28428e23074cc04166d"><param name="Name" value="Double"></OBJECT>
@@ -1578,6 +1580,7 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_8h.html#a170f84915df79377080be708302bcb08"><param name="Name" value="Ipc_attach"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57"><param name="Name" value="Ipc_control"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a3b5a2f1d389a104ea0b02aad9c5978fc"><param name="Name" value="Ipc_CONTROLCMD_LOADCALLBACK"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a10bc56753834cf04eba473fe775433eb"><param name="Name" value="Ipc_CONTROLCMD_SETTERMINATEPOLICY"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a1624f824278e993226134c8b8ef61992"><param name="Name" value="Ipc_CONTROLCMD_STARTCALLBACK"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#af2a882f81ddbd6493defb19f14d302f7"><param name="Name" value="Ipc_CONTROLCMD_STOPCALLBACK"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_8h.html#abd0bc0fb5d84415b441c7050f92826c0"><param name="Name" value="Ipc_detach"></OBJECT>
@@ -1600,14 +1603,23 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_8h.html#a3f2ce5a89194a828588322cb29548360"><param name="Name" value="Ipc_S_SUCCESS"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_8h.html#aca550c6a5498637cfec7b0f4e6d07828"><param name="Name" value="Ipc_start"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_8h.html#ae47b1d9fa8486f162c836f142f0ab2ee"><param name="Name" value="Ipc_stop"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_ipc___terminate.html"><param name="Name" value="Ipc_Terminate"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_ipc___terminate.html#a2ba364a6684f190fc05560ed5062553c"><param name="Name" value="policy"></OBJECT>
+  </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a1229919513266da85e13429a3952ccd4"><param name="Name" value="Ipc_TERMINATEPOLICY_NOTIFY"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a3d15c102515c2cac19246ebf525f5e7d"><param name="Name" value="Ipc_TERMINATEPOLICY_STOP"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_8h.html#af3b2fb0c66ad86f148870202b1b7aca1"><param name="Name" value="Ipc_writeConfig"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html"><param name="Name" value="IpcHost.h"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#abf147a27b18f592553758792ed8ffc57"><param name="Name" value="Ipc_control"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a3b5a2f1d389a104ea0b02aad9c5978fc"><param name="Name" value="Ipc_CONTROLCMD_LOADCALLBACK"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a10bc56753834cf04eba473fe775433eb"><param name="Name" value="Ipc_CONTROLCMD_SETTERMINATEPOLICY"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a1624f824278e993226134c8b8ef61992"><param name="Name" value="Ipc_CONTROLCMD_STARTCALLBACK"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#af2a882f81ddbd6493defb19f14d302f7"><param name="Name" value="Ipc_CONTROLCMD_STOPCALLBACK"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a80045d7de31e30daa6b0fe5a697e6cd8"><param name="Name" value="Ipc_runtimeId"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a1229919513266da85e13429a3952ccd4"><param name="Name" value="Ipc_TERMINATEPOLICY_NOTIFY"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_host_8h.html#a3d15c102515c2cac19246ebf525f5e7d"><param name="Name" value="Ipc_TERMINATEPOLICY_STOP"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="_ipc_mem_mgr_8h.html"><param name="Name" value="IpcMemMgr.h"></OBJECT>
   <UL>
@@ -2461,6 +2473,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_frame_q_buf_mgr___frame_buf_params___tag.html#a3c7bfd9257c6ad1db71c41be36c81c39"><param name="Name" value="FrameQBufMgr_FrameBufParams_Tag"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_syslink_mem_mgr___alloc_block__tag.html#a74c3da1acd63d7c51caee8eaf490dd1f"><param name="Name" value="SyslinkMemMgr_AllocBlock_tag"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_ipc___terminate.html#a2ba364a6684f190fc05560ed5062553c"><param name="Name" value="policy"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_list___elem__tag.html#a7342f8de676c2ebf27bce01d7fbb39ea"><param name="Name" value="prev"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="struct_list___elem__tag.html#a7342f8de676c2ebf27bce01d7fbb39ea"><param name="Name" value="List_Elem_tag"></OBJECT>

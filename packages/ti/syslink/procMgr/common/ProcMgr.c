@@ -3200,3 +3200,8 @@ ProcMgr_getLoadedFileId (ProcMgr_Handle handle)
 
     return (fileId);
 }
+
+ProcMgr_Handle _ProcMgr_getHandle(UInt16 procId)
+{
+    return(ProcMgr_state.procHandles[procId]);
+}

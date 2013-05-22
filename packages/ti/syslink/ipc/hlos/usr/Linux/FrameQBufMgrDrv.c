@@ -58,6 +58,7 @@
 #include <ti/syslink/utils/Cache.h>
 #include <ti/syslink/utils/String.h>
 #include <ti/syslink/utils/Gate.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/syslink/FrameQBufMgr.h>
@@ -120,7 +121,7 @@ FrameQBufMgrDrv_open (Void)
         /* TBD: Protection for refCount. */
         FrameQBufMgrDrv_refCount++;
 
-        FrameQBufMgrDrv_handle = open (FRAMEQBUFMGR_DRIVER_NAME,
+        FrameQBufMgrDrv_handle = Dev_pollOpen (FRAMEQBUFMGR_DRIVER_NAME,
                                        O_SYNC | O_RDWR);
         if (FrameQBufMgrDrv_handle < 0) {
             perror (FRAMEQBUFMGR_DRIVER_NAME);

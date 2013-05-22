@@ -170,27 +170,71 @@ typedef enum {
  *  APIs
  * =============================================================================
  */
-/* Opens the file object. */
-Int OsalKfile_open (String             fileName,
-                    Char *             fileMode,
-                    OsalKfile_Handle * fileHandle);
 
-/* Closes the underlying file. */
-Int OsalKfile_close (OsalKfile_Handle * fileHandle);
+/*!
+ *  @brief      Opens the specified file and returns the file object.
+ *
+ *  @param      fileName    The file to be operated upon.
+ *  @param      fileMode    Mode with which the file will be operated.
+ *  @param      fileHandle  Return parameter: The file object.
+ *
+ *  @sa         OsalKfile_close, Memory_alloc
+ */
+Int OsalKfile_open(String fileName, Char *fileMode,
+        OsalKfile_Handle *fileHandle);
 
-/* Reads the block of data from current position in the file. */
-Int OsalKfile_read (OsalKfile_Handle fileHandle,
-                    Char *           buffer,
-                    UInt32           size,
-                    UInt32           count);
+/*!
+ *  @brief      Closes the file represented by the specified file handle.
+ *
+ *  @param      fileHandle  File handle
+ *
+ *  @sa         OsalKfile_open, Memory_free
+ */
+Int OsalKfile_close(OsalKfile_Handle *fileHandle);
 
-/* Repositions the file pointer according to specified arguments.*/
-Int OsalKfile_seek (OsalKfile_Handle fileHandle,
-                    Int32            offset,
-                    OsalKfile_Pos    pos);
+/*!
+ *  @brief      Reads the block of data from current position in the file.
+ *
+ *              Reads a specified number of items of specified size
+ *              bytes from file to a buffer.
+ *
+ *  @param[in]      fileHandle  File handle
+ *  @param[in,out]  buffer      Buffer to be filled with read data
+ *  @param[in]      size        Size to be read from the file handle.
+ *  @param[in]      count       Number of the size elements to be read.
+ *  @param[in,out]  numBytes    Number of bytes read
+ *
+ *  @remark     Upon successful return, @c numBytes contains the number of
+ *              bytes read into @c buffer.
+ *
+ *  @sa OsalKfile_seek()
+ *  @sa OsalKfile_tell()
+ */
+Int OsalKfile_read (OsalKfile_Handle fileHandle, Char *buffer, UInt32 size,
+        UInt32 count, UInt32 *numBytes);
 
-/* Returns the current file pointer position for a specified file handle. */
-UInt32 OsalKfile_tell (OsalKfile_Handle fileHandle);
+/*!
+ *  @brief      Repositions the file pointer according to specified arguments.
+ *
+ *  @param      Kernel file handle.
+ *  @param      offset position from where to begin the seek.
+ *  @param      pos start, end or any random location to begin seek.
+ *
+ *  @sa OsalKfile_read()
+ *  @sa OsalKfile_tell()
+ */
+Int OsalKfile_seek(OsalKfile_Handle fileHandle, Int32 offset, OsalKfile_Pos pos);
+
+/*!
+ *  @brief      Returns the current file pointer position for the specified
+ *              file handle.
+ *
+ *  @param      fileHandle  Kernel file handle.
+ *
+ *  @sa OsalKfile_read()
+ *  @sa OsalKfile_seek()
+ */
+UInt32 OsalKfile_tell(OsalKfile_Handle fileHandle);
 
 
 #if defined (__cplusplus)

@@ -58,6 +58,7 @@
 #include <ti/syslink/utils/Cache.h>
 #include <ti/syslink/utils/String.h>
 #include <ti/syslink/utils/Gate.h>
+#include <ti/syslink/utils/Dev.h>
 
 /* Module specific header files */
 #include <ti/syslink/inc/ClientNotifyMgr_errBase.h>
@@ -119,7 +120,7 @@ ClientNotifyMgrDrv_open (Void)
         /* TBD: Protection for refCount. */
         ClientNotifyMgrDrv_refCount++;
 
-        ClientNotifyMgrDrv_handle = open (CLIENTNOTIFYMGR_DRVIER_NAME,
+        ClientNotifyMgrDrv_handle = Dev_pollOpen (CLIENTNOTIFYMGR_DRVIER_NAME,
                               O_SYNC | O_RDWR);
         if (ClientNotifyMgrDrv_handle < 0) {
             perror (CLIENTNOTIFYMGR_DRVIER_NAME);

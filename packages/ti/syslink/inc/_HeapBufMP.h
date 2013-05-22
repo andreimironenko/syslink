@@ -69,19 +69,16 @@ extern "C" {
  * =============================================================================
  */
 /*!
- *  @def    HEAPBUFMP_MODULEID
  *  @brief  Unique module ID.
  */
 #define HeapBufMP_MODULEID        (0x4CD7)
 
 /*!
- *  @var    HeapBufMP_CREATED
- *
  *  @brief  HeapBufMP tag used in the attrs->status field
  */
 #define HeapBufMP_CREATED     0x05251995
 
-/*
+/*!
  *  @brief  Object for the HeapBufMP Handle
  */
 #define HeapBufMP_Object IHeap_Object

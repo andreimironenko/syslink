@@ -65,7 +65,6 @@ extern "C" {
 
 
 /*!
- *  @def    OSALTHREAD_MODULEID
  *  @brief  Module ID for OsalThread OSAL module.
  */
 #define OSALTHREAD_MODULEID                 (UInt16) 0x6833
@@ -75,45 +74,38 @@ extern "C" {
  * =============================================================================
  */
 /*!
-* @def   OSALTHREAD_STATUSCODEBASE
-* @brief Stauts code base for MEMORY module.
-*/
+ * @brief Status code base for OsalThread module.
+ */
 #define OSALTHREAD_STATUSCODEBASE      (OSALTHREAD_MODULEID << 12u)
 
 /*!
-* @def   OSALTHREAD_MAKE_FAILURE
-* @brief Convert to failure code.
-*/
+ * @brief Convert to failure code.
+ */
 #define OSALTHREAD_MAKE_FAILURE(x)    ((Int) (0x80000000  \
                                        + (OSALTHREAD_STATUSCODEBASE + (x))))
 /*!
-* @def   OSALTHREAD_MAKE_SUCCESS
-* @brief Convert to success code.
-*/
+ * @brief Convert to success code.
+ */
 #define OSALTHREAD_MAKE_SUCCESS(x)      (OSALTHREAD_STATUSCODEBASE + (x))
 
 /*!
-* @def   OSALTHREAD_E_MEMORY
-* @brief Indicates OsalThread alloc/free failure.
-*/
+ * @brief Indicates OsalThread alloc/free failure.
+ */
 #define OSALTHREAD_E_MEMORY             OSALTHREAD_MAKE_FAILURE(1)
 
 /*!
-* @def   OSALTHREAD_E_INVALIDARG
-* @brief Invalid argument provided
-*/
+ * @brief Invalid argument provided
+ */
 #define OSALTHREAD_E_INVALIDARG         OSALTHREAD_MAKE_FAILURE(2)
 
 /*!
-* @def   OSALTHREAD_E_FAIL
-* @brief Generic failure
-*/
+ * @brief Generic failure
+ */
 #define OSALTHREAD_E_FAIL               OSALTHREAD_MAKE_FAILURE(3)
 
 /*!
-* @def   OSALTHREAD_SUCCESS
-* @brief Operation successfully completed
-*/
+ * @brief Operation successfully completed
+ */
 #define OSALTHREAD_SUCCESS              OSALTHREAD_MAKE_SUCCESS(0)
 
 
@@ -161,8 +153,7 @@ typedef enum {
 
 
 /*!
- *  @brief   Structure containing information required for unmapping a
- *           memory region.
+ *  @brief   Creation params for an OsalThread
  */
 typedef struct OsalThread_Params_tag {
     OsalThread_PriorityType  priorityType;
@@ -180,51 +171,132 @@ typedef struct OsalThread_Params_tag {
  *  APIs
  * =============================================================================
  */
-/* Initialize the thread module. */
-Int32 OsalThread_setup (Void);
 
-/* Finalize the thread module. */
-Int32 OsalThread_destroy (Void);
+/*!
+ *  @brief  Initialize the thread module
+ *
+ *  @retval 0 Success
+ *
+ *  @sa     OsalThread_destroy()
+ */
+Int32 OsalThread_setup(Void);
 
-/* create the thread. */
-OsalThread_Handle OsalThread_create (OsalThread_CallbackFxn fxn,
-                                     Ptr                    fxnArgs,
-                                     OsalThread_Params *    params);
+/*!
+ *  @brief  Finalize the thread module
+ *
+ *  @retval 0 Success
+ *
+ *  @sa     OsalThread_setup()
+ */
+Int32 OsalThread_destroy(Void);
 
-/* Destroys the thread. */
-Int OsalThread_delete (OsalThread_Handle * threadHandle);
+/*!
+ *  @brief  Create the thread.
+ *
+ *  @param  fxn Function which will be executed after the thread creation.
+ *  @param  fxnArgs data which the function requires.
+ *
+ *  @sa     OsalThread_delete()
+ */
+OsalThread_Handle OsalThread_create(OsalThread_CallbackFxn fxn,
+        Ptr fxnArgs, OsalThread_Params *params);
 
-/* Disables the specific thread. */
-Void OsalThread_disableThread (OsalThread_Handle threadHandle);
+/*!
+ *  @brief  Destroys the thread.
+ *
+ *  @param  threadHandle which needs to be destroyed.
+ *
+ *  @retval OSALTHREAD_SUCCESS
+ *  @retval OSALTHREAD_E_INVALIDARG
+ *  @retval OSALTHREAD_E_FAIL
+ *
+ *  @sa     OsalThread_create()
+ */
+Int OsalThread_delete(OsalThread_Handle * threadHandle);
 
-/* Enables the specific thread. */
-Void OsalThread_enableThread (OsalThread_Handle threadHandle);
+/*!
+ *  @brief Disables the thread.
+ *
+ *  @param threadHandle which needs to be disabled.
+ *
+ *  @sa    OsalThread_enableThread()
+ */
+Void OsalThread_disableThread(OsalThread_Handle threadHandle);
 
-/* Disables all threads created using this module. */
-Void OsalThread_disable (Void);
+/*!
+ *  @brief  Enables the thread.
+ *
+ *  @param  threadHandle which needs to be disabled.
+ *
+ *  @sa     OsalThread_disableThread
+ */
+Void OsalThread_enableThread(OsalThread_Handle threadHandle);
 
-/* Enable all threads created using this module. */
-Void OsalThread_enable (Void);
+/*!
+ *  @brief  Disables all threads created using this module.
+ *
+ *  @sa     OsalThread_enable()
+ */
+Void OsalThread_disable(Void);
 
-/* Activate this thread. This function may gets invoked from ISR context. */
+/*!
+ *  @brief  Enables all threads created using this module.
+ *
+ *  @sa     OsalThread_disable()
+ */
+Void OsalThread_enable(Void);
+
+/*!
+ *  @brief  Activate this thread.
+ *
+ *  @remark This function may gets invoked from ISR context.
+ *
+ *  @param  threadHandle the thread which needs to be activated
+ *
+ *  @sa     OsalThread_yield()
+ */
 Void OsalThread_activate (OsalThread_Handle threadHandle);
 
-/* Yield this thread. */
-Void OsalThread_yield (OsalThread_Handle threadHandle);
-
-/* Sleep this thread for specific time in milli-seconds. */
-Void OsalThread_sleep (UInt32 time);
-
-/* Delay this thread for specific time in milli-seconds. Does not schedule out
- * this thread.
+/*!
+ *  @brief  Yield the processor
+ *
+ *  @param  threadHandle    Thread handle
+ *
+ *  @sa     OsalThread_activate()
  */
-Void OsalThread_delay (UInt32 time);
+Void OsalThread_yield(OsalThread_Handle threadHandle);
 
-/* Checks if current context is a thread context. */
-Bool OsalThread_inThread (Void);
+/*!
+ *  @brief   Sleep the current thread for specific time in milli-seconds.
+ *
+ *  @param   time       milliseconds to sleep
+ *
+ *  @sa      OsalThread_delay()
+ */
+Void OsalThread_sleep(UInt32 time);
 
-/* Wait for thread completion */
-Void OsalThread_waitForThread (OsalThread_Handle threadHandle);
+/*!
+ *  @brief   Delay this thread for specific time in milli-seconds.
+ *
+ *  @remarks Does not schedule out this thread.
+ *
+ *  @param   time       milliseconds to delay
+ *
+ *  @sa      OsalThread_delay
+ */
+Void OsalThread_delay(UInt32 time);
+
+/*!
+ *  @brief   Checks if current context is a thread context or ISR context.
+ */
+Bool OsalThread_inThread(Void);
+
+/*!
+ *  @brief   Wait for thread completion.
+ *
+ *  @param   threadHandle       Thread Handle
+ */
+Void OsalThread_waitForThread(OsalThread_Handle threadHandle);
 
 #if defined (__cplusplus)
 }

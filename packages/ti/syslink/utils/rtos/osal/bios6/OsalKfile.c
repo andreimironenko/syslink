@@ -62,10 +62,6 @@
 #include <ti/syslink/inc/knl/OsalKfile.h>
 #include <ti/syslink/utils/Trace.h>
 
-#if defined (__cplusplus)
-extern "C" {
-#endif
-
 
 /* =============================================================================
  *  Macros and types
@@ -87,14 +83,9 @@ typedef struct OsalKfile_Object_tag {
  *  APIs
  * =============================================================================
  */
-/*!
- *  @brief      Opens the specified file and returns the file object.
- *
- *  @param      fileName    The file to be operated upon.
- *  @param      fileMode    Mode with which the file will be operated.
- *  @param      fileHandle  Return parameter: The file object.
- *
- *  @sa         OsalKfile_close, Memory_alloc
+
+/*
+ * ======== OsalKfile_open ========
  */
 Int
 OsalKfile_open (String             fileName,
@@ -154,12 +145,8 @@ OsalKfile_open (String             fileName,
     return (status);
 }
 
-/*!
- *  @brief      Closes the file represented by the specified file handle.
- *
- *  @param      fileHandle  File handle
- *
- *  @sa         OsalKfile_open, Memory_free
+/*
+ * ======== OsalKfile_close ========
  */
 Int
 OsalKfile_close (OsalKfile_Handle * fileHandle)
@@ -182,25 +169,12 @@ OsalKfile_close (OsalKfile_Handle * fileHandle)
     return (status);
 }
 
-/*!
- *  @brief      Reads the block of data from current position in the file.
- *
- *              Reads a specified number of items of specified size
- *              bytes from file to a buffer.
- *
- *  @param      fileHandle  File handle
- *  @param      buffer      Working buffer which will be populated with the read
- *                          data.
- *  @param      size        Size to be read from the file handle.
- *  @param      count       Number of the size elements to be read.
- *
- *  @sa         OsalKfile_seek, OsalKfile_tell
+
+/*
+ * ======== OsalKfile_read ========
  */
-Int
-OsalKfile_read (OsalKfile_Handle fileHandle,
-                Char *           buffer,
-                UInt32           size,
-                UInt32           count)
+Int OsalKfile_read(OsalKfile_Handle fileHandle, Char *buffer, UInt32 size,
+        UInt32 count, UInt32 *numBytes)
 {
     Int                 status      = OSALKFILE_SUCCESS;
     UInt32              elementsRead   = 0;
@@ -213,14 +187,17 @@ OsalKfile_read (OsalKfile_Handle fileHandle,
     GT_assert (curTrace, (buffer != NULL));
     GT_assert (curTrace, (size != 0));
     GT_assert (curTrace, (count != 0));
+    GT_assert (curTrace, (numBytes != NULL));
 
     fileObject = (OsalKfile_Object*) fileHandle;
     GT_assert (curTrace,
               ((fileObject->curPos + (size * count)) <= fileObject->size));
 
-    elementsRead = fread (buffer,size,count, fileObject->fileDesc);
+    elementsRead = fread(buffer, size, count, fileObject->fileDesc);
 
-    if(elementsRead == 0) {
+    *numBytes = elementsRead;
+
+    if (elementsRead == 0) {
         status = OSALKFILE_E_FILEREAD;
         GT_setFailureReason (curTrace,
                              GT_4CLASS,
@@ -234,19 +211,14 @@ OsalKfile_read (OsalKfile_Handle fileHandle,
     GT_assert (curTrace, (elementsRead == (UInt32) count));
 
 
-    GT_1trace (curTrace, GT_LEAVE, "OsalKfile_read", status);
-    /*! @retval OSALKFILE_SUCCESS Operation successfully completed. */
-    return status;
+    GT_1trace(curTrace, GT_LEAVE, "OsalKfile_read", status);
+
+    return (status);
 }
 
-/*!
- *  @brief      Repositions the file pointer according to specified arguments.
- *
- *  @param      Kernel file handle.
- *  @param      offset position from where to begin the seek.
- *  @param      pos start, end or any random location to begin seek.
- *
- *  @sa         OsalKfile_read, OsalKfile_tell
+
+/*
+ * ======== OsalKfile_seek ========
  */
 Int
 OsalKfile_seek (OsalKfile_Handle fileHandle,
@@ -351,13 +323,9 @@ OsalKfile_seek (OsalKfile_Handle fileHandle,
     return status;
 }
 
-/*!
- *  @brief      Returns the current file pointer position for the specified
- *              file handle.
- *
- *  @param      fileHandle  Kernel file handle.
- *
- *  @sa         OsalKfile_read, OsalKfile_seek
+
+/*
+ * ======== OsalKfile_tell ========
  */
 UInt32
 OsalKfile_tell (OsalKfile_Handle fileHandle)
@@ -378,8 +346,3 @@ OsalKfile_tell (OsalKfile_Handle fileHandle)
     /* !< @retval File-position Current file pointer position in file.*/
     return posValue;
 }
-
-
-#if defined (__cplusplus)
-}
-#endif /* defined (_cplusplus)*/
